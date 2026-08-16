@@ -1,0 +1,63 @@
+name: Selma Repo Health
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: selma-health-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repository inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Commit: $GITHUB_SHA"
+          find . -maxdepth 2 -type f -not -path './.git/*' | sort | head -200
+      - name: Validate Python syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find . -type f -name '*.py' -not -path './.git/*' -not -path '*/.venv/*' -not -path '*/venv/*')
+          if ((${#files[@]})); then python3 -m py_compile "${files[@]}"; else echo 'No Python files'; fi
+      - name: Validate shell syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find . -type f -name '*.sh' -not -path './.git/*' -not -path '*/node_modules/*')
+          if ((${#files[@]})); then for f in "${files[@]}"; do bash -n "$f"; done; else echo 'No shell files'; fi
+      - name: Validate JSON
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          bad=[]
+          for p in pathlib.Path('.').rglob('*.json'):
+              if any(part in {'.git','node_modules','.venv','venv','build','dist'} for part in p.parts): continue
+              try: json.loads(p.read_text(encoding='utf-8'))
+              except Exception as e: bad.append(f'{p}: {e}')
+          if bad: raise SystemExit('\n'.join(bad))
+          print('JSON validation passed')
+          PY
+      - name: Build-entrypoint summary
+        shell: bash
+        run: |
+          {
+            echo '## Selma repository health'
+            echo
+            echo "- Repository: $GITHUB_REPOSITORY"
+            echo "- Ref: $GITHUB_REF"
+            for f in package.json pyproject.toml requirements.txt gradlew build.gradle build.gradle.kts settings.gradle settings.gradle.kts '*.sln' '*.csproj' Cargo.toml go.mod; do compgen -G "$f" >/dev/null && echo "- Detected: $f" || true; done
+            echo '- Baseline checks: Python syntax, shell syntax, JSON validity.'
+          } >> "$GITHUB_STEP_SUMMARY"
