@@ -11,11 +11,15 @@ namespace DungeonsCrows.EditorTools
 {
     public static class GothicPrototypeSceneBuilder
     {
+        private const string RootFolder = "Assets/Crows";
+        private const string SceneFolder = RootFolder + "/Scenes";
+        private const string MaterialFolder = RootFolder + "/Materials/Prototype";
+
         [MenuItem("Dungeons & Crows/Build Gothic Prototype Scene")]
         public static void Build()
         {
+            EnsureFolders();
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            scene.name = "GothicPrototype";
 
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
@@ -26,9 +30,9 @@ namespace DungeonsCrows.EditorTools
             RenderSettings.ambientEquatorColor = new Color(0.045f, 0.04f, 0.05f);
             RenderSettings.ambientGroundColor = new Color(0.018f, 0.018f, 0.022f);
 
-            Material stone = MakeMaterial("Prototype Stone", new Color(0.16f, 0.17f, 0.18f), 0.15f, 0.45f);
-            Material altarMat = MakeMaterial("Prototype Altar", new Color(0.20f, 0.12f, 0.12f), 0.05f, 0.35f);
-            Material crowMat = MakeMaterial("Prototype Crow", new Color(0.012f, 0.014f, 0.018f), 0.0f, 0.3f);
+            Material stone = GetOrCreateMaterial("PrototypeStone", new Color(0.16f, 0.17f, 0.18f), 0.15f, 0.45f);
+            Material altarMat = GetOrCreateMaterial("PrototypeAltar", new Color(0.20f, 0.12f, 0.12f), 0.05f, 0.35f);
+            Material crowMat = GetOrCreateMaterial("PrototypeCrow", new Color(0.012f, 0.014f, 0.018f), 0.0f, 0.3f);
 
             CreateBox("[PLACEHOLDER] Floor", new Vector3(0f, -0.25f, 0f), new Vector3(20f, 0.5f, 20f), stone, PlaceholderCategory.Environment, "Replace with modular gothic stone floor kit.");
 
@@ -80,14 +84,30 @@ namespace DungeonsCrows.EditorTools
             moonLight.color = new Color(0.35f, 0.42f, 0.55f);
             moon.transform.rotation = Quaternion.Euler(55f, -35f, 0f);
 
-            const string folder = "Assets/Crows/Scenes";
-            if (!AssetDatabase.IsValidFolder("Assets/Crows")) AssetDatabase.CreateFolder("Assets", "Crows");
-            if (!AssetDatabase.IsValidFolder(folder)) AssetDatabase.CreateFolder("Assets/Crows", "Scenes");
-            string path = folder + "/GothicPrototype.unity";
-            EditorSceneManager.SaveScene(scene, path);
+            string scenePath = SceneFolder + "/GothicPrototype.unity";
+            EditorSceneManager.SaveScene(scene, scenePath);
             AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
             Selection.activeGameObject = player;
-            Debug.Log("Built Dungeons & Crows gothic prototype scene: " + path);
+            Debug.Log("Built Dungeons & Crows gothic prototype scene: " + scenePath);
+        }
+
+        private static void EnsureFolders()
+        {
+            EnsureFolder(RootFolder);
+            EnsureFolder(SceneFolder);
+            EnsureFolder(RootFolder + "/Materials");
+            EnsureFolder(MaterialFolder);
+        }
+
+        private static void EnsureFolder(string folder)
+        {
+            if (AssetDatabase.IsValidFolder(folder)) return;
+            int slash = folder.LastIndexOf('/');
+            string parent = folder.Substring(0, slash);
+            string name = folder.Substring(slash + 1);
+            if (!AssetDatabase.IsValidFolder(parent)) EnsureFolder(parent);
+            AssetDatabase.CreateFolder(parent, name);
         }
 
         private static GameObject CreateBox(string name, Vector3 position, Vector3 scale, Material material, PlaceholderCategory category, string intent)
@@ -115,12 +135,21 @@ namespace DungeonsCrows.EditorTools
             light.shadows = LightShadows.Soft;
         }
 
-        private static Material MakeMaterial(string name, Color color, float metallic, float smoothness)
+        private static Material GetOrCreateMaterial(string assetName, Color color, float metallic, float smoothness)
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            Material material = new Material(shader) { name = name, color = color };
+            string path = $"{MaterialFolder}/{assetName}.mat";
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+                material = new Material(shader) { name = assetName };
+                AssetDatabase.CreateAsset(material, path);
+            }
+
+            material.color = color;
             if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", metallic);
             if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", smoothness);
+            EditorUtility.SetDirty(material);
             return material;
         }
 
