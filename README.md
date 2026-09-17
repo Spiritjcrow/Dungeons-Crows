@@ -5,6 +5,15 @@ A turn-based persistent dark-fantasy RPG/MMORPG built around tabletop-style stor
 ## Current development branch
 `selma/unity-ai-foundation-v0.1`
 
+## Public online vertical slice
+A browser-playable rules/network prototype is now live:
+
+https://dungeons-crows-online-qmp5ax.v2.appdeploy.ai/
+
+This public slice proves create/join sessions, deterministic turn resolution, shared encounter persistence, realtime updates, non-combat interaction, and bounded AI Dungeon Master narration while Unity remains the intended production 3D client.
+
+See `docs/ONLINE_PLAYTEST.md` for scope and release gates.
+
 ## Visual identity
 The game targets an original gothic old-PC atmosphere: high-angle 3D dungeon exploration, torch-lit stone, crypts, ruins, occult architecture, readable silhouettes, restrained retro detail, and dramatic magical effects. The mood is informed by the *feel* of classic Diablo-era isometric crawlers and Hexen-era dark fantasy while using original Dungeons & Crows art, UI, characters, lore, maps, audio, and gameplay assets.
 
