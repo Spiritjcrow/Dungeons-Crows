@@ -1,0 +1,45 @@
+[
+  {
+    "name": "Create a hunt and resolve the first attack",
+    "sanity": true,
+    "viewport": "desktop",
+    "covers": ["session creation", "deterministic turn resolution", "AI Dungeon Master narration", "persistent shared chronicle"],
+    "description": "Verifies the critical solo play loop creates a session and commits one deterministic combat turn.",
+    "steps": ["Enter adventurer name Rook and create a hunt", "Confirm a six-character session code and Turn 1 are visible", "Choose Attack"],
+    "expected": "The game advances to Turn 2, the Warden combat result is visible in the Shared Chronicle, and Dungeon Master narration is visible."
+  },
+  {
+    "name": "Second adventurer joins and receives realtime turn updates",
+    "viewport": "desktop",
+    "covers": ["session joining", "session initial load", "realtime subscription", "cross-client entity update"],
+    "description": "Verifies two browsers share one hunt and accepted turns propagate without refreshing.",
+    "setup": ["Actor A creates a hunt as Rook and keeps the six-character session code"],
+    "steps": ["Actor B opens the app, selects Join Hunt, enters name Ash and Actor A's session code", "Actor A performs the currently legal action", "Actor B keeps the session open without refreshing"],
+    "expected": "Actor B sees the updated turn number and new Shared Chronicle entry automatically."
+  },
+  {
+    "name": "Awaken the sealed crow altar",
+    "viewport": "desktop",
+    "covers": ["non-combat interaction", "world flag persistence", "AI narration after deterministic interaction"],
+    "description": "Verifies the slice supports a story interaction that changes canonical world state without being combat.",
+    "steps": ["Create a hunt as Vale", "Choose Altar while it is sealed", "Observe the crypt board and Shared Chronicle"],
+    "expected": "The altar changes from SEALED to AWAKE, the turn advances, and the interaction is recorded with Dungeon Master narration."
+  },
+  {
+    "name": "Reject an out-of-turn action without mutating shared state",
+    "viewport": "desktop",
+    "covers": ["out-of-turn rejection", "invalid-write guardrail", "authoritative turn ownership"],
+    "description": "Verifies a non-active player cannot advance or alter the encounter.",
+    "setup": ["Actor A creates a hunt as Rook", "Actor B joins the same hunt as Ash while Rook remains the active actor"],
+    "steps": ["Actor B attempts to choose Attack", "Observe the visible turn/error state", "Compare the displayed turn number before and after the attempt"],
+    "expected": "Actor B cannot commit the attack, a visible not-your-turn state is shown, and the turn number does not advance."
+  },
+  {
+    "name": "Submit a role-play action on mobile",
+    "viewport": "mobile",
+    "covers": ["mobile action tray", "speak action", "freeform action length boundary", "responsive gameplay"],
+    "description": "Verifies the mobile layout keeps the encounter and action controls usable for a role-play turn.",
+    "steps": ["Create a hunt as Nyx", "Enter I ask the Warden who sealed this crypt in the spoken action field", "Choose Speak"],
+    "expected": "The turn is accepted, the spoken line appears in the shared result/narration, and no horizontal scrolling is required to use the action controls."
+  }
+]

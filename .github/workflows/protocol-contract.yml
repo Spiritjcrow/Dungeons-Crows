@@ -1,0 +1,26 @@
+name: Protocol Contract
+
+on:
+  pull_request:
+    paths:
+      - 'WebPrototype/backend/**'
+      - 'UnityProject/Assets/Crows/Scripts/Online/**'
+      - 'scripts/check_protocol_contract.py'
+      - '.github/workflows/protocol-contract.yml'
+  push:
+    branches:
+      - 'selma/**'
+    paths:
+      - 'WebPrototype/backend/**'
+      - 'UnityProject/Assets/Crows/Scripts/Online/**'
+      - 'scripts/check_protocol_contract.py'
+      - '.github/workflows/protocol-contract.yml'
+
+jobs:
+  protocol-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Verify web and Unity protocol match
+        run: python3 scripts/check_protocol_contract.py
