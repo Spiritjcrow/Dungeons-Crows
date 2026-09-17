@@ -5,6 +5,19 @@ namespace DungeonsCrows.Online
     public static class OnlineProtocol
     {
         public const string Version = "dc-turn/1.0";
+        public const string SessionEntityType = "game-session";
+        public const int MaxPlayerNameLength = 24;
+        public const int MaxFreeformTextLength = 240;
+        public const int MaxPartySize = 4;
+        public const int MaxChronicleEntries = 40;
+
+        public static readonly string[] Actions =
+        {
+            "attack",
+            "defend",
+            "interact",
+            "speak"
+        };
     }
 
     public static class ProtocolCompatibility
