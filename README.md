@@ -6,13 +6,22 @@ A turn-based persistent dark-fantasy RPG/MMORPG built around tabletop-style stor
 `selma/unity-ai-foundation-v0.1`
 
 ## Public online vertical slice
-A browser-playable rules/network prototype is now live:
+A browser-playable rules/network prototype is live:
 
 https://dungeons-crows-online-qmp5ax.v2.appdeploy.ai/
 
 This public slice proves create/join sessions, deterministic turn resolution, shared encounter persistence, realtime updates, non-combat interaction, and bounded AI Dungeon Master narration while Unity remains the intended production 3D client.
 
-See `docs/ONLINE_PLAYTEST.md` for scope and release gates.
+### Unity ↔ web protocol
+The live service and Unity bridge use `dc-turn/1.0`.
+
+- Protocol guide: `docs/ONLINE_PROTOCOL.md`
+- Unity integration guide: `docs/UNITY_ONLINE_BRIDGE.md`
+- OpenAPI 3.1 contract: `docs/openapi/dungeons-crows-online-v1.yaml`
+- Drift checker: `scripts/check_protocol_contract.py`
+- Unity REST adapter: `UnityProject/Assets/Crows/Scripts/Online/OnlineGameClient.cs`
+
+The Unity client verifies `GET /api/protocol` before online play and rejects incompatible servers rather than silently loading mismatched state.
 
 ## Visual identity
 The game targets an original gothic old-PC atmosphere: high-angle 3D dungeon exploration, torch-lit stone, crypts, ruins, occult architecture, readable silhouettes, restrained retro detail, and dramatic magical effects. The mood is informed by the *feel* of classic Diablo-era isometric crawlers and Hexen-era dark fantasy while using original Dungeons & Crows art, UI, characters, lore, maps, audio, and gameplay assets.
@@ -32,13 +41,21 @@ Current foundation:
 - RetroGothicCamera for high-angle exploration.
 - One-click gothic prototype scene generator.
 - Placeholder asset marker so temporary primitives cannot silently become production assets.
+- Versioned online DTOs plus UnityWebRequest create/join/load/turn transport.
+- EditMode protocol compatibility/JSON parsing tests.
 
 ### Build the first scene
 1. Open `UnityProject` in Unity 6.
 2. Allow Package Manager to resolve dependencies.
 3. Choose **Dungeons & Crows → Build Gothic Prototype Scene**.
 4. Open `Assets/Crows/Scenes/GothicPrototype.unity` if Unity does not open it automatically.
-5. Press Play after adding a NetworkManager prefab/configuration when testing multiplayer turn state.
+5. Choose **Dungeons & Crows → Validate Online Bridge Configuration**.
+6. Run EditMode tests, including `OnlineProtocolTests`.
+7. Press Play after adding a NetworkManager prefab/configuration when testing multiplayer turn state.
+8. Complete one browser ↔ Unity create/join/turn smoke test before promoting PR #6 out of draft.
+
+## CI note
+GitHub Actions is currently failing before workflow steps receive a runner (`runner_id: 0`, `steps: []`) for both the new protocol gate and the pre-existing repo-health workflow. The infrastructure blocker is tracked in issue #7 and `docs/CI_BLOCKERS.md`.
 
 ## Major systems planned
 - AI Dungeon Master orchestration and memory.
