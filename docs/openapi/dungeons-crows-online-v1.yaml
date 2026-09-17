@@ -1,0 +1,222 @@
+openapi: 3.1.0
+info:
+  title: Dungeons & Crows Online Turn API
+  version: dc-turn/1.0
+  description: Hosted authoritative session and turn service for Dungeons & Crows.
+servers:
+  - url: https://dungeons-crows-online-qmp5ax.v2.appdeploy.ai
+paths:
+  /api/protocol:
+    get:
+      summary: Read the protocol compatibility descriptor
+      responses:
+        '200':
+          description: Protocol descriptor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProtocolDescriptor'
+  /api/sessions:
+    post:
+      summary: Create a hunt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  maxLength: 24
+      responses:
+        '201':
+          description: Hunt created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/sessions/join:
+    post:
+      summary: Join a hunt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, name]
+              properties:
+                code:
+                  type: string
+                name:
+                  type: string
+                  maxLength: 24
+      responses:
+        '200':
+          description: Hunt joined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/sessions/{code}:
+    get:
+      summary: Load canonical hunt state
+      parameters:
+        - $ref: '#/components/parameters/SessionCode'
+      responses:
+        '200':
+          description: Current canonical state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionEnvelope'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/sessions/{code}/turn:
+    post:
+      summary: Submit one player turn intent
+      parameters:
+        - $ref: '#/components/parameters/SessionCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TurnRequest'
+      responses:
+        '200':
+          description: Accepted deterministic turn plus narration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TurnEnvelope'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Illegal or out-of-turn action
+components:
+  parameters:
+    SessionCode:
+      name: code
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    BadRequest:
+      description: Invalid request
+    NotFound:
+      description: Hunt not found
+  schemas:
+    ProtocolDescriptor:
+      type: object
+      required: [protocolVersion, sessionEntityType, actions, limits]
+      properties:
+        protocolVersion:
+          const: dc-turn/1.0
+        sessionEntityType:
+          const: game-session
+        actions:
+          type: array
+          prefixItems:
+            - const: attack
+            - const: defend
+            - const: interact
+            - const: speak
+        limits:
+          type: object
+          required: [playerName, freeformText, partySize, chronicleEntries]
+          properties:
+            playerName: { const: 24 }
+            freeformText: { const: 240 }
+            partySize: { const: 4 }
+            chronicleEntries: { const: 40 }
+    Combatant:
+      type: object
+      required: [id, name, hp, maxHp, defense, isEnemy]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        hp: { type: integer }
+        maxHp: { type: integer }
+        defense: { type: integer }
+        isEnemy: { type: boolean }
+        defendingUntilTurn: { type: integer }
+    LogEntry:
+      type: object
+      required: [turn, kind, text]
+      properties:
+        turn: { type: integer }
+        kind:
+          type: string
+          enum: [system, action, dm]
+        text: { type: string }
+    GameSession:
+      type: object
+      required: [code, turnNumber, activeActorId, party, enemy, altarOpened, seed, lastNarration, log]
+      properties:
+        code: { type: string }
+        turnNumber: { type: integer }
+        activeActorId: { type: string }
+        party:
+          type: array
+          maxItems: 4
+          items:
+            $ref: '#/components/schemas/Combatant'
+        enemy:
+          $ref: '#/components/schemas/Combatant'
+        altarOpened: { type: boolean }
+        seed: { type: integer }
+        lastNarration: { type: string }
+        log:
+          type: array
+          maxItems: 40
+          items:
+            $ref: '#/components/schemas/LogEntry'
+    SessionEnvelope:
+      type: object
+      required: [protocolVersion, session]
+      properties:
+        protocolVersion:
+          const: dc-turn/1.0
+        session:
+          $ref: '#/components/schemas/GameSession'
+        playerId:
+          type: string
+    TurnRequest:
+      type: object
+      required: [actorId, actorName, actionType]
+      properties:
+        actorId: { type: string }
+        actorName:
+          type: string
+          maxLength: 24
+        actionType:
+          type: string
+          enum: [attack, defend, interact, speak]
+        targetId: { type: string }
+        freeformText:
+          type: string
+          maxLength: 240
+        connectionId: { type: string }
+    TurnEnvelope:
+      type: object
+      required: [protocolVersion, session, narration, diceRolls]
+      properties:
+        protocolVersion:
+          const: dc-turn/1.0
+        session:
+          $ref: '#/components/schemas/GameSession'
+        narration: { type: string }
+        diceRolls:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 20
