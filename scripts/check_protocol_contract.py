@@ -9,6 +9,16 @@ TS_INDEX = ROOT / 'WebPrototype/backend/index.ts'
 CS_PROTOCOL = ROOT / 'UnityProject/Assets/Crows/Scripts/Online/OnlineProtocol.cs'
 CS_CLIENT = ROOT / 'UnityProject/Assets/Crows/Scripts/Online/OnlineGameClient.cs'
 
+REQUIRED_SESSION_FIELDS = [
+    'chapter',
+    'campaignStatus',
+    'rookeryPurified',
+    'crownBroken',
+    'relics',
+    'ritualAttempts',
+    'score',
+]
+
 
 def require(pattern: str, text: str, label: str) -> str:
     match = re.search(pattern, text, re.DOTALL)
@@ -55,6 +65,19 @@ def main() -> int:
             if ts_value != cs_value:
                 errors.append(f'Limit mismatch {ts_name}: web={ts_value}, unity={cs_value}')
 
+        for field in REQUIRED_SESSION_FIELDS:
+            if not re.search(rf"'({re.escape(field)})'", ts):
+                errors.append(f'Web protocol missing required session field: {field}')
+            if not re.search(rf'public\s+(?:int|string|bool|string\[\])\s+{re.escape(field)}\s*;', cs):
+                errors.append(f'Unity DTO missing required session field: {field}')
+
+        if 'chapters: [1, 2, 3]' not in ts:
+            errors.append('Web protocol does not declare three campaign chapters')
+        if 'public int[] chapters;' not in cs:
+            errors.append('Unity protocol descriptor missing chapters')
+        if 'campaignStatuses' not in ts or 'public string[] campaignStatuses;' not in cs:
+            errors.append('Campaign status descriptor is not mirrored across web and Unity')
+
         if "'GET /api/protocol'" not in ts_index:
             errors.append('Web backend does not expose GET /api/protocol')
         if 'withProtocol(' not in ts_index:
@@ -77,6 +100,7 @@ def main() -> int:
     print(f' version={ts_version}')
     print(f' entity={ts_entity}')
     print(f' actions={",".join(ts_actions)}')
+    print(f' campaign_fields={",".join(REQUIRED_SESSION_FIELDS)}')
     return 0
 
 
