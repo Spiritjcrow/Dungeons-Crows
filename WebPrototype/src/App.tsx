@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bird, DoorOpen, Feather, Swords } from 'lucide-react';
+import { Bird, DoorOpen, Feather, LogOut, Swords } from 'lucide-react';
 import { ActionPanel } from './components/ActionPanel';
 import { Chronicle } from './components/Chronicle';
 import { CryptBoard } from './components/CryptBoard';
@@ -44,7 +44,7 @@ function App() {
             <Swords size={18} /> {game.busy ? 'Opening the gate…' : mode === 'create' ? 'Begin Campaign' : 'Join the Party'}
           </button>
           {game.error && <p className="error-banner" role="alert">{game.error}</p>}
-          <p className="fineprint">No cosmetic controls: every visible action is backed by canonical game state.</p>
+          <p className="fineprint">Your current Hunt identity resumes automatically after a refresh on this browser. No cosmetic controls: every visible action is backed by real state.</p>
         </section>
       </main>
     );
@@ -58,14 +58,20 @@ function App() {
           <p className="eyebrow">CHAPTER {game.session.chapter} · {title.toUpperCase()}</p>
           <h1>Dungeons <span>&</span> Crows</h1>
         </div>
-        <div className="session-chip">
-          <span className={game.connected ? 'pulse online' : 'pulse'} /> Session <strong>{game.session.code}</strong>
+        <div className="header-actions">
+          <div className="session-chip">
+            <span className={game.connected ? 'pulse online' : 'pulse'} /> Session <strong>{game.session.code}</strong>
+          </div>
+          <button className="exit-button" onClick={game.leaveSession}><LogOut size={15} /> Leave Hunt</button>
         </div>
       </header>
       {game.session.campaignStatus !== 'active' && (
         <section className={'campaign-result ' + game.session.campaignStatus}>
-          <strong>{game.session.campaignStatus === 'victory' ? 'THE BLACK ROOK OATH IS BROKEN' : 'THE OATH IS BROKEN UPON YOU'}</strong>
-          <span>Final score: {game.session.score} · Relics: {game.session.relics.length}</span>
+          <div>
+            <strong>{game.session.campaignStatus === 'victory' ? 'THE BLACK ROOK OATH IS BROKEN' : 'THE OATH IS BROKEN UPON YOU'}</strong>
+            <span>Final score: {game.session.score} · Relics: {game.session.relics.length}</span>
+          </div>
+          <button className="exit-button" onClick={game.leaveSession}>Return to Gate</button>
         </section>
       )}
       <section className="game-grid">
