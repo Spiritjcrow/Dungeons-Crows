@@ -4,7 +4,7 @@ namespace DungeonsCrows.Online
 {
     public static class OnlineProtocol
     {
-        public const string Version = "dc-turn/1.0";
+        public const string Version = "dc-turn/2.0";
         public const string SessionEntityType = "game-session";
         public const int MaxPlayerNameLength = 24;
         public const int MaxFreeformTextLength = 240;
@@ -44,6 +44,8 @@ namespace DungeonsCrows.Online
         public string sessionEntityType;
         public string[] actions;
         public ProtocolLimits limits;
+        public int[] chapters;
+        public string[] campaignStatuses;
         public string[] sessionFields;
         public string[] turnResponseFields;
     }
@@ -76,7 +78,14 @@ namespace DungeonsCrows.Online
         public string activeActorId;
         public CombatantDto[] party;
         public CombatantDto enemy;
+        public int chapter;
+        public string campaignStatus;
         public bool altarOpened;
+        public bool rookeryPurified;
+        public bool crownBroken;
+        public string[] relics;
+        public int ritualAttempts;
+        public int score;
         public int seed;
         public string lastNarration;
         public LogEntryDto[] log;
