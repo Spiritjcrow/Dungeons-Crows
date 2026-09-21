@@ -227,6 +227,9 @@ button:disabled {
   color: #ddc59e;
   letter-spacing: 0.15em;
 }
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.exit-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #4a4540; background: #111317; color: #a99f91; padding: 9px 11px; cursor: pointer; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.exit-button:hover { border-color: #8f633e; color: #f0e5d0; }
 .pulse {
   display: inline-block;
   width: 8px;
@@ -399,7 +402,8 @@ button:disabled {
 .player-token.fallen, .party-member.fallen { opacity: .42; filter: grayscale(1); }
 .campaign-stats { display: grid; gap: 6px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #282725; font-family: ui-monospace, monospace; font-size: 11px; color: #a99171; }
 .relic-list { line-height: 1.6; }
-.campaign-result { display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; margin: 0 0 14px; border: 1px solid #73563b; background: #19150f; font-family: ui-sans-serif, system-ui, sans-serif; }
+.campaign-result { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 16px; margin: 0 0 14px; border: 1px solid #73563b; background: #19150f; font-family: ui-sans-serif, system-ui, sans-serif; }
+.campaign-result > div { display: grid; gap: 5px; }
 .campaign-result strong { letter-spacing: .1em; }
 .campaign-result.victory { border-color: #6f925c; color: #dcebcf; }
 .campaign-result.defeat { border-color: #8c4942; color: #efc0bb; }
@@ -487,6 +491,8 @@ button:disabled {
     align-items: start;
     gap: 12px;
   }
+  .header-actions { flex-direction: column; align-items: stretch; }
+  .campaign-result { align-items: stretch; flex-direction: column; }
   .game-grid {
     display: flex;
     flex-direction: column;
