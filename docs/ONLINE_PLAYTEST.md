@@ -1,35 +1,56 @@
-# Dungeons & Crows — Online Playtest
+# Dungeons & Crows — Online Campaign Alpha
 
-## Live vertical slice
+## Live build
+
 https://dungeons-crows-online-qmp5ax.v2.appdeploy.ai/
 
-Status: public browser prototype deployed and AppDeploy runtime QA reported ready with no frontend or backend error logs on 2026-09-16.
+AppDeploy reports the current runtime ready with no frontend, backend, or network error logs. AppDeploy did not execute its e2e suite in the latest deployment, so runtime-ready status is kept separate from gameplay acceptance testing.
 
 ## What this build is
-This is the early rules/network vertical slice for Dungeons & Crows. It proves public session creation/joining, deterministic turn resolution, persistent shared encounter state, realtime browser updates, a non-combat crow-altar interaction, and bounded AI Dungeon Master narration.
 
-It deliberately uses a stylized browser-rendered crypt instead of pretending to be the finished game renderer. Unity 6 + URP remains the production 3D client and will converge on the same authoritative turn contract.
+This is a browser-playable three-chapter campaign using the same authoritative service intended for the Unity client. It is no longer an endless single-room encounter.
 
-## Current encounter
-The Crow Crypt contains:
-- up to four adventurers,
-- one Crowbound Warden,
-- a sealed crow altar,
-- attack, defend, interact, and speak actions,
-- seeded d20-style resolution,
-- Warden retaliation,
-- shared turn chronicle,
-- realtime session updates.
+Implemented campaign loop:
+
+1. The Crow Crypt — awaken the altar and defeat the Crowbound Warden.
+2. The Bone Rookery — complete the cleansing rite and defeat the Bone Rook.
+3. The Black Rook — break the crown and defeat the Black Rook.
+4. Reach a persistent `victory` state, or lose the Hunt when every adventurer falls.
+
+## Working mechanics
+
+- 1–4 player Hunt sessions with six-character codes.
+- Seeded d20 attack and objective rolls.
+- HP, defense, guard, enemy retaliation, fallen state.
+- Defend restores 2 Resolve/HP and guards through the next attack.
+- Three chapter objectives with persistent flags.
+- Chapter II/III rite progress capped at three legal attempts.
+- Three persistent relics.
+- Score.
+- Full healing between completed chapters for living party members.
+- Persistent chronicle and AI narration after deterministic resolution.
+- Realtime browser subscription updates.
+- Terminal victory and defeat states that reject further mutation.
+- Legacy session migration into the v2 campaign shape.
+
+## Verification evidence
+
+A local execution of the deterministic engine reproduced a balance failure in an earlier candidate build. After repairing the rules, the intended Defend/Attack strategy completed the campaign for 5,000/5,000 deterministic seeds in the verification sweep. A deliberately poor strategy that repeatedly spends turns speaking under attack still reaches the defeat state.
+
+The hosted frontend/backend build is also compiler/deployment clean. Cross-client realtime and full browser UI e2e remain part of the acceptance suite because the host did not execute those e2e tests automatically in the latest run.
+
+## No-placeholder rule
+
+Visible gameplay controls are backed by implemented state transitions. Features not yet runtime-verified in Unity are not exposed as playable Unity controls.
 
 ## Authority boundary
-Mechanical state resolves deterministically before narration. AI can narrate accepted results but does not directly control hit points, turn ownership, dice results, inventory, economy, or committed world state.
 
-## Visual direction
-The public slice uses original gothic-crow styling: dark stone, torch warmth, iron framing, fog/noise, parchment text, and high-contrast tactical readability. It is inspired by the atmosphere of classic dark-fantasy PC games without copying proprietary Diablo/Hexen art, UI, maps, audio, characters, or names.
+AI can narrate resolved outcomes but cannot author HP, dice results, score, relics, chapter progression, victory, defeat, or ownership.
 
 ## Next release gates
-1. Mirror hosted prototype source into this repository.
-2. Verify the Unity project in an actual Unity 6 editor runtime.
-3. Complete one Unity end-to-end turn using the shared contract.
-4. Add Unity WebGL build automation only after the editor baseline is verified.
-5. Replace development primitives with licensed/original production assets.
+
+1. Run Unity 6 EditMode and bridge smoke checks.
+2. Complete browser ↔ Unity same-Hunt convergence test.
+3. Restore GitHub Actions runner execution tracked in issue #7.
+4. Add Unity scene-facing controls only after the above pass.
+5. Replace prototype visual primitives with original/licensed production assets without changing canonical mechanics.
