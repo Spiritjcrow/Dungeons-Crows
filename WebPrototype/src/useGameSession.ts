@@ -2,9 +2,25 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ws } from '@appdeploy/client';
 import { objectiveFor, type ActionType, type GameSession } from './gameTypes';
 
+const STORAGE_KEY = 'dungeons-crows-player-v2';
+
+type SavedIdentity = {
+  code: string;
+  playerId: string;
+  playerName: string;
+};
+
 function messageFrom(error: unknown): string {
   if (error instanceof Error) return error.message;
   return String(error || 'The crypt rejected that action.');
+}
+
+function saveIdentity(identity: SavedIdentity) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(identity));
+}
+
+function clearIdentity() {
+  localStorage.removeItem(STORAGE_KEY);
 }
 
 export function useGameSession() {
@@ -33,6 +49,30 @@ export function useGameSession() {
   }, []);
 
   useEffect(() => {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const saved = JSON.parse(raw) as Partial<SavedIdentity>;
+      if (!saved.code || !saved.playerId || !saved.playerName) {
+        clearIdentity();
+        return;
+      }
+      setBusy(true);
+      api.get('/api/sessions/' + saved.code)
+        .then(response => {
+          if (!response.data?.session) throw new Error('Saved Hunt was not found.');
+          setSession(response.data.session as GameSession);
+          setPlayerId(saved.playerId || '');
+          setPlayerName(saved.playerName || '');
+        })
+        .catch(() => clearIdentity())
+        .finally(() => setBusy(false));
+    } catch {
+      clearIdentity();
+    }
+  }, []);
+
+  useEffect(() => {
     const code = session?.code;
     if (!code || !connectionId) {
       setSubscribed(false);
@@ -58,30 +98,50 @@ export function useGameSession() {
   }, [session?.code, connectionId]);
 
   const createSession = useCallback(async (name: string) => {
-    setBusy(true); setError('');
+    setBusy(true);
+    setError('');
     try {
-      const response = await api.post('/api/sessions', { name: name.trim() });
-      setSession(response.data.session as GameSession);
-      setPlayerId(String(response.data.playerId));
-      setPlayerName(name.trim());
-    } catch (err) { setError(messageFrom(err)); }
-    finally { setBusy(false); }
+      const cleanName = name.trim();
+      const response = await api.post('/api/sessions', { name: cleanName });
+      const nextSession = response.data.session as GameSession;
+      const nextPlayerId = String(response.data.playerId);
+      setSession(nextSession);
+      setPlayerId(nextPlayerId);
+      setPlayerName(cleanName);
+      saveIdentity({ code: nextSession.code, playerId: nextPlayerId, playerName: cleanName });
+    } catch (err) {
+      setError(messageFrom(err));
+    } finally {
+      setBusy(false);
+    }
   }, []);
 
   const joinSession = useCallback(async (code: string, name: string) => {
-    setBusy(true); setError('');
+    setBusy(true);
+    setError('');
     try {
-      const response = await api.post('/api/sessions/join', { code: code.trim().toUpperCase(), name: name.trim() });
-      setSession(response.data.session as GameSession);
-      setPlayerId(String(response.data.playerId));
-      setPlayerName(name.trim());
-    } catch (err) { setError(messageFrom(err)); }
-    finally { setBusy(false); }
+      const cleanName = name.trim();
+      const response = await api.post('/api/sessions/join', {
+        code: code.trim().toUpperCase(),
+        name: cleanName,
+      });
+      const nextSession = response.data.session as GameSession;
+      const nextPlayerId = String(response.data.playerId);
+      setSession(nextSession);
+      setPlayerId(nextPlayerId);
+      setPlayerName(cleanName);
+      saveIdentity({ code: nextSession.code, playerId: nextPlayerId, playerName: cleanName });
+    } catch (err) {
+      setError(messageFrom(err));
+    } finally {
+      setBusy(false);
+    }
   }, []);
 
   const submitTurn = useCallback(async (actionType: ActionType, freeformText?: string) => {
     if (!session || session.campaignStatus !== 'active') return;
-    setBusy(true); setError('');
+    setBusy(true);
+    setError('');
     try {
       const objective = objectiveFor(session);
       const response = await api.post('/api/sessions/' + session.code + '/turn', {
@@ -93,12 +153,32 @@ export function useGameSession() {
         connectionId,
       });
       setSession(response.data.session as GameSession);
-    } catch (err) { setError(messageFrom(err)); }
-    finally { setBusy(false); }
+    } catch (err) {
+      setError(messageFrom(err));
+    } finally {
+      setBusy(false);
+    }
   }, [session, playerId, playerName, connectionId]);
 
+  const leaveSession = useCallback(() => {
+    clearIdentity();
+    activeCodeRef.current = '';
+    setSubscribed(false);
+    setSession(null);
+    setPlayerId('');
+    setPlayerName('');
+    setError('');
+  }, []);
+
   return {
-    session, playerId, error, busy, connected: subscribed,
-    createSession, joinSession, submitTurn,
+    session,
+    playerId,
+    error,
+    busy,
+    connected: subscribed,
+    createSession,
+    joinSession,
+    submitTurn,
+    leaveSession,
   };
 }
