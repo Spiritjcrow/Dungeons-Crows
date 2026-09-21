@@ -2,9 +2,9 @@
 
 ## Current version
 
-`dc-turn/1.0`
+`dc-turn/2.0`
 
-The protocol is the compatibility boundary between the hosted authoritative game service and Unity clients. A client must call `GET /api/protocol` before creating, joining, loading, or submitting online turns. A Unity client must reject a server whose `protocolVersion` is not exactly compatible with the client version.
+The protocol is the compatibility boundary between the hosted authoritative game service and Unity clients. A client must call `GET /api/protocol` before creating, joining, loading, or submitting online turns. Unity rejects a server whose `protocolVersion` is not exactly compatible with the client version.
 
 ## Live service
 
@@ -13,23 +13,33 @@ The protocol is the compatibility boundary between the hosted authoritative game
 ## Endpoints
 
 - `GET /api/protocol` — compatibility descriptor.
-- `POST /api/sessions` — create a hunt. JSON body: `{ "name": "Rook" }`.
-- `POST /api/sessions/join` — join a hunt. JSON body: `{ "code": "ABC123", "name": "Rook" }`.
-- `GET /api/sessions/:code` — load canonical session state.
-- `POST /api/sessions/:code/turn` — submit one intent to the deterministic resolver.
+- `POST /api/sessions` — create a three-chapter hunt.
+- `POST /api/sessions/join` — join an active hunt.
+- `GET /api/sessions/:code` — load canonical campaign state.
+- `POST /api/sessions/:code/turn` — submit one deterministic turn intent.
 
 All session and turn responses carry `protocolVersion` at the top level.
 
 ## Actions
 
-The v1 action vocabulary is deliberately small:
+The v2 action vocabulary remains deliberately small and fully implemented:
 
-- `attack`
-- `defend`
-- `interact`
-- `speak`
+- `attack` — seeded d20 attack against the current chapter enemy.
+- `defend` — restores 2 Resolve/HP and grants guard through the next attack.
+- `interact` — resolves the current chapter objective.
+- `speak` — records a role-play action while still consuming a legal turn.
 
-`interact` currently targets the crow altar. `speak` may carry `freeformText` but does not bypass deterministic game rules.
+Chapter objective targets are `altar`, `rookery`, and `crown`. Chapter II and III rites succeed by their third legal attempt at the latest, preventing an unwinnable objective lock.
+
+## Campaign state
+
+The campaign contains three canonical chapters:
+
+1. The Crow Crypt — Crowbound Warden + Awaken Altar.
+2. The Bone Rookery — Bone Rook + Cleanse Rookery.
+3. The Black Rook — Black Rook + Break Crown.
+
+Terminal campaign states are `victory` and `defeat`. After either terminal state the server rejects further state mutation.
 
 ## Limits
 
@@ -38,8 +48,6 @@ The v1 action vocabulary is deliberately small:
 - Party size: 4 players.
 - Retained chronicle: 40 entries.
 
-The same constants are represented in `WebPrototype/backend/protocol.ts` and `UnityProject/Assets/Crows/Scripts/Online/OnlineProtocol.cs`. `scripts/check_protocol_contract.py` fails when these copies drift.
-
 ## Canonical session fields
 
 - `code`
@@ -47,21 +55,28 @@ The same constants are represented in `WebPrototype/backend/protocol.ts` and `Un
 - `activeActorId`
 - `party`
 - `enemy`
+- `chapter`
+- `campaignStatus`
 - `altarOpened`
+- `rookeryPurified`
+- `crownBroken`
+- `relics`
+- `ritualAttempts`
+- `score`
 - `seed`
 - `lastNarration`
 - `log`
 
-Combatant state includes `id`, `name`, `hp`, `maxHp`, `defense`, `isEnemy`, and optional/zero `defendingUntilTurn`.
+The backend migrates earlier persisted v1 sessions into v2 state instead of orphaning valid Hunt codes.
 
 ## Authority rule
 
-The server owns canonical state. Unity sends intent and renders the accepted result. The LLM Dungeon Master supplies narration after deterministic resolution and cannot directly author HP, dice rolls, initiative/turn ownership, inventory, or persisted world state.
+The hosted deterministic resolver owns HP, dice rolls, objectives, relics, score, chapter transitions, victory, defeat, and turn ownership. AI narration occurs only after deterministic resolution and cannot commit canonical state.
 
 ## Realtime
 
-The browser client currently subscribes to entity type `game-session` by session code. Unity v1 uses HTTP create/join/load/turn calls first; realtime transport can be layered onto the same canonical session DTO without changing combat semantics.
+Browser clients perform an initial HTTP state load, subscribe to `game-session` by Hunt code through the realtime service, apply `entity.update` messages, and unsubscribe when leaving the session. The green session indicator represents a successful entity subscription rather than merely an open socket.
 
 ## Compatibility changes
 
-Any breaking change to field meaning, required fields, action vocabulary, turn resolution semantics, or canonical ownership requires a protocol version change. Additive fields may remain in `dc-turn/1.0` only when older clients can safely ignore them.
+Breaking changes to required field meaning, actions, campaign semantics, or ownership require a new protocol version. The v1 OpenAPI contract remains archived; the live contract is `docs/openapi/dungeons-crows-online-v2.yaml`.
