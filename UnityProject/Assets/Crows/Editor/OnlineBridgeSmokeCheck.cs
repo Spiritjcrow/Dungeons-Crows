@@ -20,7 +20,7 @@ namespace DungeonsCrows.EditorTools
 
             if (OnlineProtocol.Actions == null || OnlineProtocol.Actions.Length != 4)
             {
-                Debug.LogError("Expected four v1 online actions.");
+                Debug.LogError("Expected four dc-turn/2.0 online actions.");
                 ok = false;
             }
 
@@ -29,7 +29,7 @@ namespace DungeonsCrows.EditorTools
                 OnlineProtocol.MaxPartySize != 4 ||
                 OnlineProtocol.MaxChronicleEntries != 40)
             {
-                Debug.LogError("Unity online limits do not match dc-turn/1.0.");
+                Debug.LogError("Unity online limits do not match dc-turn/2.0.");
                 ok = false;
             }
 
@@ -38,7 +38,7 @@ namespace DungeonsCrows.EditorTools
                 Debug.Log(
                     "Dungeons & Crows online bridge configuration OK: " +
                     OnlineProtocol.Version +
-                    ". Next run EditMode tests and a live create/join/turn smoke test.");
+                    ". Next run EditMode tests and a live create/join/turn campaign smoke test.");
             }
         }
     }
