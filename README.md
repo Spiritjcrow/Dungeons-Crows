@@ -14,7 +14,7 @@ The browser client now contains a finishable three-chapter campaign rather than 
 2. **The Bone Rookery** — complete the cleansing rite and defeat the Bone Rook.
 3. **The Black Rook** — break the crown and defeat the Black Rook.
 
-Implemented canonical mechanics include 1–4 player Hunt sessions, seeded d20 rolls, HP, defense, guard, enemy retaliation, fallen state, three chapter objectives, three relics, score, persistent chronicle, bounded AI narration, realtime browser updates, legacy-session migration, victory, defeat, and terminal-state mutation locks.
+Implemented canonical mechanics include 1–4 player Hunt sessions, seeded d20 rolls, HP, defense, guard, enemy retaliation, fallen state, three chapter objectives, three relics, score, persistent chronicle, bounded AI narration, realtime browser updates, refresh-resume identity, working Leave Hunt/Return to Gate, legacy-session migration, victory, defeat, and terminal-state mutation locks.
 
 ### Verification rule
 
