@@ -29,7 +29,7 @@ Implemented campaign loop:
 - Score.
 - Full healing between completed chapters for living party members.
 - Persistent chronicle and AI narration after deterministic resolution.
-- Realtime browser subscription updates.
+- Realtime browser subscription updates.\n- Resume-after-refresh using the locally stored Hunt/player identity while canonical state remains server-side.\n- Working Leave Hunt / Return to Gate controls that clear only local identity.
 - Terminal victory and defeat states that reject further mutation.
 - Legacy session migration into the v2 campaign shape.
 
