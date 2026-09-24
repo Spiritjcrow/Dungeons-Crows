@@ -156,6 +156,41 @@ require(
     "Alpha4QualityDirector" in builder,
     "Scene builder does not wire the quality director",
 )
+require(
+    "CreateMorphicLandscape" in builder
+    and "chapterBridge.SetLandscape" in builder,
+    "Scene builder does not wire the walkable morphic landscape",
+)
+require(
+    "ChapterEnemyPresenter" in builder
+    and "ProceduralActorMotion" in builder,
+    "Scene builder does not wire chapter enemies and motion fallback",
+)
+
+landscape = text(
+    "UnityProject/Assets/Crows/Scripts/World/MorphicLandscapeController.cs"
+)
+procedural_motion = text(
+    "UnityProject/Assets/Crows/Scripts/Presentation/ProceduralActorMotion.cs"
+)
+require(
+    "MeshCollider" in landscape
+    and "CommitStoryBoundary" in landscape
+    and "SnapToChapter" in landscape,
+    "Morphic landscape is not collider-backed and chapter-driven",
+)
+for token in (
+    "PlayAttack",
+    "PlayGuard",
+    "PlayRite",
+    "PlaySpeak",
+    "PlayHit",
+    "PlayDefeated",
+):
+    require(
+        token in procedural_motion,
+        f"Procedural actor motion missing: {token}",
+    )
 
 tests = text(
     "UnityProject/Assets/Crows/Tests/Editor/Alpha4PresentationTests.cs"
@@ -166,6 +201,7 @@ for test_name in (
     "MorphicEnvironment_SnapAppliesChapterPoseExactly",
     "LocalHuntIdentityStore_RoundTripsAndClears",
     "QualityProfiles_ScaleDownWithoutChangingGameRules",
+    "MorphicLandscape_SnapChangesWalkableGeometry",
     "CanonicalPresentationDelta_DerivesOnlyCommittedChanges",
     "ChapterEnemyPresenter_SelectsCanonicalChapterEnemy",
 ):
