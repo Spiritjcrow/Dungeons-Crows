@@ -1,40 +1,75 @@
-# Dungeons & Crows — Game Vision v0.1
+# Dungeons & Crows — Game Vision v0.2
 
 ## Identity
-A turn-based multiplayer dark-fantasy role-playing game with a persistent shared world, an AI Dungeon Master, and dynamically changing maps. It keeps tabletop-style story mechanics, party decisions, dice/stat checks, initiative, quests, inventory, character progression, consequences, and role-play at the center.
+A persistent multiplayer dark-fantasy action RPG with tabletop-derived authoritative mechanics, an AI Dungeon Master, voice interaction, corvid heroes, and a world that physically changes with the story.
 
-## Visual direction
-The physical and visual feel is inspired by the atmosphere and readability of early gothic PC games such as Diablo-era isometric dungeon crawlers and Hexen-era dark fantasy, without copying their characters, textures, maps, UI, sounds, names, or proprietary assets.
+The visual and interaction target is the established **Alpha 4 Dungeons & Crows visual canon**, not a flat board-game dashboard.
 
-Target presentation:
-- 3D gothic stone dungeons and ruins.
-- Fixed or semi-fixed high-angle camera for exploration and turn-based tactical encounters.
-- Optional close first-person/over-shoulder cinematic view for dialogue, traps, and scripted story beats.
-- Heavy shadow, torch/fire pools, stained glass, crypts, catacombs, ruined keeps, wet stone, fog, supernatural glow.
-- Chunky readable silhouettes and slightly retro material detail rather than photorealistic clutter.
-- Crows are a core world language: scouts, omens, familiars, factions, enemies, messengers, environmental guides, and living map signals.
-- Morphing maps visibly change only at narratively valid boundaries so the world feels alive without moving floors underneath a player's legal turn.
+## Primary gameplay presentation
+- Fully navigable **3D HD world**.
+- Player-selectable **first-person** and **third-person over-the-shoulder** gameplay.
+- Instant perspective switching without changing canonical character state.
+- Free exploration movement outside deterministic action resolution.
+- Combat, rites, loot, quests, progression, and persistent consequences remain validated by authoritative systems.
+- Cinematic camera/VFX reactions are presentation only and cannot create game-state effects by themselves.
+
+## Alpha 4 visual canon
+- Armored anthropomorphic/corvid warriors with readable silhouettes, feathers, steel, leather, cloth, relics, and weapons.
+- Moonlit gothic keeps, ruined cities, crypts, cathedrals, bridges, mountain valleys, forests, battlefronts, and underground ruins.
+- Strong black/steel/stone materials contrasted by fire, moonlight, red health energy, blue crow-essence/magic, and supernatural violet accents.
+- Dense atmospheric fog, volumetric-looking light shafts, embers, sparks, smoke, weather, wet stone, snow, ash, and magical corruption.
+- Functional combat HUD language inspired by classic dark action RPG readability: health/essence orbs, ability hotbar, enemy health banner, minimap, objective tracker, party identifiers.
+- UI must never present a nonworking gameplay function.
+
+## Morphic world
+The environment is not a static level backdrop.
+
+Committed story changes may alter:
+- terrain elevation and traversal routes;
+- bridges, gates, towers, crypt walls, stairways, platforms, caves, ruins, and ritual architecture;
+- weather, fog, time-of-day feel, environmental lighting, corruption, vegetation, fluids, debris, and persistent battle damage;
+- entrances and exits revealed by chapter state;
+- footprints, traces, destructible artifacts, and other InkMesh-style persistent evidence.
+
+Morphs occur only at **story-safe committed boundaries**. A wall never moves merely because the AI described it, and terrain never changes underneath an unresolved legal action.
+
+## Perspective and movement
+Unity camera target:
+- First person for immersion, ranged inspection, dialogue, traps, confined spaces, and player preference.
+- Third person for traversal, melee readability, character fashion/gear, party play, and large encounters.
+- Collision-aware shoulder camera.
+- Keyboard/mouse and gamepad baseline.
+- Future touch control profile for Android-class devices.
+
+Current prototype controls:
+- WASD / left stick: move.
+- Shift / left-stick press: sprint.
+- Space / gamepad south button: jump.
+- Mouse / right stick: look.
+- V: toggle first-person / third-person.
 
 ## Game loop
-1. Party enters or resumes a persistent region.
-2. AI Dungeon Master reads canonical world/party/quest state.
-3. Players speak or select actions.
-4. STT converts voice to structured player intent.
-5. Authoritative rules server validates legal actions, checks stats/dice, and resolves deterministic game mechanics.
-6. LLM Dungeon Master narrates the result and proposes world/NPC/quest deltas.
-7. Validator accepts only schema-valid deltas.
-8. Turn server commits the new canonical state.
-9. Unity animates the result, morphs the allowed scene elements, and plays TTS/dialogue.
-10. State is persisted for the next turn/session.
+1. Player explores or resumes a persistent region in first or third person.
+2. AI Dungeon Master reads canonical world, party, quest, and environmental state.
+3. Player uses voice or gameplay controls to declare actions.
+4. STT converts voice to structured intent when voice is used.
+5. Authoritative rules validate actions, checks, ownership, combat, and progression.
+6. AI Dungeon Master narrates resolved results and proposes schema-valid story/world deltas.
+7. Validator accepts or rejects proposed deltas.
+8. Server commits canonical state.
+9. Unity animates combat, VFX, NPC reactions, camera response, and story-safe environment morphs.
+10. Persistent world state is saved for the next player/session.
 
 ## Architecture rule
-The LLM may propose story outcomes but does not directly alter authoritative stats, inventory, initiative, combat math, player ownership, economy, or world persistence. Those are committed by deterministic server systems after validation.
-
-## MMORPG scope
-Persistent accounts, characters, parties, guilds/flocks, shared towns, instanced adventures, world events, trading/economy, asynchronous consequences, seasonal story arcs, and AI-run NPC factions are planned as services around the same authoritative turn engine.
+The LLM may narrate and propose. It does not directly author HP, dice results, inventory, initiative, player ownership, economy, score, relics, chapter state, victory/defeat, or persistent geometry state.
 
 ## Rendering target
-Unity 6 + URP. First target is desktop/Chromebook-capable streaming or local PC build, with a performance profile that can scale down toward Android. Addressables own world/creature/environment bundles so art can be replaced and streamed without rewriting game logic.
+Unity 6 + URP 17 generation, using scalable quality tiers:
+- **Cinematic/PC:** high-resolution textures, dense shadows, post-processing, atmospheric effects, high particle counts, long view distance.
+- **Balanced/Chromebook:** reduced shadow cascades, particle density and terrain detail while keeping visual identity.
+- **Mobile/Android:** lower render scale, LOD density, effect complexity and view distance while preserving the same authored world and mechanics.
 
-## Art replacement policy
-Primitive/placeholder geometry is development-only. Every placeholder carries a replacement tag/category. Production builds should fail asset validation when required production categories still point to placeholder assets.
+Addressables own replaceable world, character, creature, VFX, audio, and environment bundles so visual production can advance without rewriting the rules layer.
+
+## Production art rule
+Primitive geometry remains development-only and is always tagged as placeholder. No release build should claim the Alpha 4 visual target while required production environment, character, animation, material, VFX, or UI assets remain placeholders.
