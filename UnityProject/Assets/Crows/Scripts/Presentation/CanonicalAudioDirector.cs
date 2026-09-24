@@ -1,4 +1,4 @@
-using DungeonsCrows.Online;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DungeonsCrows.Presentation
@@ -19,6 +19,8 @@ namespace DungeonsCrows.Presentation
         [SerializeField, Range(0f, 1f)] private float volume = 0.55f;
 
         private AudioSource _source;
+        private readonly List<AudioClip> _generatedClips =
+            new List<AudioClip>();
 
         public bool Ready =>
             _source != null &&
@@ -31,7 +33,14 @@ namespace DungeonsCrows.Presentation
 
         private void Awake()
         {
-            _source = GetComponent<AudioSource>();
+            EnsureReady();
+        }
+
+        public void EnsureReady()
+        {
+            if (_source == null)
+                _source = GetComponent<AudioSource>();
+
             _source.playOnAwake = false;
             _source.loop = false;
             _source.spatialBlend = 0f;
@@ -43,7 +52,7 @@ namespace DungeonsCrows.Presentation
             CanonicalPresentationDelta delta,
             string resolvedActionType)
         {
-            EnsureFallbackClips();
+            EnsureReady();
 
             switch (resolvedActionType)
             {
@@ -97,71 +106,91 @@ namespace DungeonsCrows.Presentation
 
         private void EnsureFallbackClips()
         {
-            if (_source == null)
-                _source = GetComponent<AudioSource>();
+            AssignFallback(
+                ref attackClip,
+                "DC_AttackFallback",
+                175f,
+                92f,
+                0.16f,
+                0.22f,
+                0.16f);
 
-            attackClip ??=
-                CreateClip(
-                    "DC_AttackFallback",
-                    175f,
-                    92f,
-                    0.16f,
-                    0.22f,
-                    0.16f);
+            AssignFallback(
+                ref hitClip,
+                "DC_HitFallback",
+                105f,
+                58f,
+                0.12f,
+                0.28f,
+                0.34f);
 
-            hitClip ??=
-                CreateClip(
-                    "DC_HitFallback",
-                    105f,
-                    58f,
-                    0.12f,
-                    0.28f,
-                    0.34f);
+            AssignFallback(
+                ref guardClip,
+                "DC_GuardFallback",
+                260f,
+                180f,
+                0.2f,
+                0.18f,
+                0.08f);
 
-            guardClip ??=
-                CreateClip(
-                    "DC_GuardFallback",
-                    260f,
-                    180f,
-                    0.2f,
-                    0.18f,
-                    0.08f);
+            AssignFallback(
+                ref ritualClip,
+                "DC_RitualFallback",
+                310f,
+                520f,
+                0.5f,
+                0.14f,
+                0.05f);
 
-            ritualClip ??=
-                CreateClip(
-                    "DC_RitualFallback",
-                    310f,
-                    520f,
-                    0.5f,
-                    0.14f,
-                    0.05f);
+            AssignFallback(
+                ref victoryClip,
+                "DC_VictoryFallback",
+                330f,
+                660f,
+                0.72f,
+                0.16f,
+                0.02f);
 
-            victoryClip ??=
-                CreateClip(
-                    "DC_VictoryFallback",
-                    330f,
-                    660f,
-                    0.72f,
-                    0.16f,
-                    0.02f);
+            AssignFallback(
+                ref defeatClip,
+                "DC_DefeatFallback",
+                150f,
+                42f,
+                0.65f,
+                0.2f,
+                0.12f);
 
-            defeatClip ??=
-                CreateClip(
-                    "DC_DefeatFallback",
-                    150f,
-                    42f,
-                    0.65f,
-                    0.2f,
-                    0.12f);
+            AssignFallback(
+                ref speakClip,
+                "DC_SpeakFallback",
+                220f,
+                245f,
+                0.08f,
+                0.08f,
+                0.02f);
+        }
 
-            speakClip ??=
-                CreateClip(
-                    "DC_SpeakFallback",
-                    220f,
-                    245f,
-                    0.08f,
-                    0.08f,
-                    0.02f);
+        private void AssignFallback(
+            ref AudioClip target,
+            string name,
+            float startFrequency,
+            float endFrequency,
+            float duration,
+            float amplitude,
+            float noiseAmount)
+        {
+            if (target != null)
+                return;
+
+            target = CreateClip(
+                name,
+                startFrequency,
+                endFrequency,
+                duration,
+                amplitude,
+                noiseAmount);
+
+            _generatedClips.Add(target);
         }
 
         private static AudioClip CreateClip(
@@ -241,6 +270,22 @@ namespace DungeonsCrows.Presentation
 
             clip.SetData(data, 0);
             return clip;
+        }
+
+        private void OnDestroy()
+        {
+            foreach (AudioClip clip in _generatedClips)
+            {
+                if (clip == null)
+                    continue;
+
+                if (Application.isPlaying)
+                    Destroy(clip);
+                else
+                    DestroyImmediate(clip);
+            }
+
+            _generatedClips.Clear();
         }
     }
 }
