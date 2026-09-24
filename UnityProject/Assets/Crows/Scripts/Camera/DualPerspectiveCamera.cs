@@ -43,8 +43,10 @@ namespace DungeonsCrows.CameraSystem
         private Camera _camera;
         private float _yaw;
         private float _pitch;
+        private Vector3 _presentationOffset;
 
         public PerspectiveMode Mode => mode;
+        public Vector3 PresentationOffset => _presentationOffset;
 
         private void Awake()
         {
@@ -92,6 +94,16 @@ namespace DungeonsCrows.CameraSystem
             if (_camera != null) _camera.orthographic = false;
         }
 
+        public void SetPresentationOffset(Vector3 localCameraOffset)
+        {
+            _presentationOffset = localCameraOffset;
+        }
+
+        public void ClearPresentationOffset()
+        {
+            _presentationOffset = Vector3.zero;
+        }
+
         private void ReadLookInput()
         {
             Vector2 look = Vector2.zero;
@@ -114,6 +126,7 @@ namespace DungeonsCrows.CameraSystem
                 : target.TransformPoint(firstPersonFallbackOffset);
 
             Quaternion desiredRotation = Quaternion.Euler(_pitch, _yaw, 0f);
+            desiredPosition += desiredRotation * _presentationOffset;
             float t = 1f - Mathf.Exp(-followSharpness * Time.deltaTime);
 
             transform.position = Vector3.Lerp(transform.position, desiredPosition, t);
@@ -148,6 +161,8 @@ namespace DungeonsCrows.CameraSystem
             Quaternion desiredRotation = Quaternion.LookRotation(
                 pivot - desiredPosition,
                 Vector3.up);
+
+            desiredPosition += desiredRotation * _presentationOffset;
 
             float t = 1f - Mathf.Exp(-followSharpness * Time.deltaTime);
             transform.position = Vector3.Lerp(transform.position, desiredPosition, t);
