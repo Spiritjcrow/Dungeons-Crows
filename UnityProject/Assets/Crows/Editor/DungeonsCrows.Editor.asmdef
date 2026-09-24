@@ -2,7 +2,8 @@
   "name": "DungeonsCrows.Editor",
   "rootNamespace": "DungeonsCrows",
   "references": [
-    "DungeonsCrows.Runtime"
+    "DungeonsCrows.Runtime",
+    "Unity.RenderPipelines.Universal.Runtime"
   ],
   "includePlatforms": [
     "Editor"
