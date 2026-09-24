@@ -39,6 +39,11 @@ namespace DungeonsCrows.Online
                 VerifyProtocol();
         }
 
+        public void SetClient(OnlineGameClient onlineClient)
+        {
+            client = onlineClient;
+        }
+
         public void VerifyProtocol()
         {
             if (_busy || client == null) return;
