@@ -212,10 +212,24 @@ namespace DungeonsCrows.UI
             _enemyHealth.style.marginTop = 5;
             enemyBox.Add(_enemyHealth);
 
+            VisualElement rightBox = new VisualElement();
+            rightBox.style.width = 180;
+            rightBox.style.alignItems = Align.FlexEnd;
+            top.Add(rightBox);
+
             _turnLabel = new Label();
             _turnLabel.style.width = 180;
             _turnLabel.style.unityTextAlign = TextAnchor.UpperRight;
-            top.Add(_turnLabel);
+            rightBox.Add(_turnLabel);
+
+            Button leave = new Button(() => campaign?.LeaveHunt())
+            {
+                text = "LEAVE HUNT"
+            };
+            StyleButton(leave);
+            leave.style.width = 120;
+            leave.style.marginTop = 6;
+            rightBox.Add(leave);
         }
 
         private void BuildPlayerOrb()
