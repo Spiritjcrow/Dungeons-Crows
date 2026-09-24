@@ -48,6 +48,21 @@ namespace DungeonsCrows.EditorTools
                 new Color(0.012f, 0.014f, 0.018f),
                 0f,
                 0.3f);
+            Material wardenMat = GetOrCreateMaterial(
+                "PrototypeWarden",
+                new Color(0.11f, 0.045f, 0.04f),
+                0.42f,
+                0.36f);
+            Material boneRookMat = GetOrCreateMaterial(
+                "PrototypeBoneRook",
+                new Color(0.33f, 0.29f, 0.22f),
+                0.18f,
+                0.28f);
+            Material blackRookMat = GetOrCreateMaterial(
+                "PrototypeBlackRook",
+                new Color(0.035f, 0.018f, 0.055f),
+                0.5f,
+                0.46f);
 
             CreateWorldShell(stone);
 
@@ -90,10 +105,19 @@ namespace DungeonsCrows.EditorTools
 
             GameObject player = CreatePlayer();
             GameObject head = CreateFirstPersonAnchor(player);
-            GameObject enemy = CreateEnemyPlaceholder(altarMat);
+            ChapterEnemyPresenter enemyPresenter =
+                CreateEnemyPresentation(
+                    wardenMat,
+                    boneRookMat,
+                    blackRookMat,
+                    out Transform initialEnemyImpact);
             CreateCrowFlock(crowMat);
 
             Camera camera = CreateCamera(player, head, out DualPerspectiveCamera cameraRig);
+            CombatCameraFeedback cameraFeedback =
+                camera.gameObject.AddComponent<CombatCameraFeedback>();
+            cameraFeedback.Configure(cameraRig);
+
             ExplorationMotor motor = player.AddComponent<ExplorationMotor>();
             motor.SetViewReference(camera.transform);
             motor.SetPerspectiveCamera(cameraRig);
@@ -127,7 +151,7 @@ namespace DungeonsCrows.EditorTools
 
             ParticleSystem attackFx = CreatePrototypeBurst(
                 "[PLACEHOLDER VFX] Resolved Attack Hit",
-                enemy.transform.position + Vector3.up * 1.2f,
+                initialEnemyImpact.position,
                 new Color(1f, 0.42f, 0.12f),
                 42,
                 6f,
@@ -186,6 +210,8 @@ namespace DungeonsCrows.EditorTools
             presentation.Configure(
                 campaign,
                 chapterBridge,
+                enemyPresenter,
+                cameraFeedback,
                 attackFx,
                 playerDamageFx,
                 guardFx,
@@ -206,7 +232,8 @@ namespace DungeonsCrows.EditorTools
                 "Built Dungeons & Crows Alpha 4 integration prototype: " +
                 scenePath +
                 " | WASD/gamepad move · Shift sprint · Space jump · V first/third person · " +
-                "online Create/Join + canonical Attack/Defend/Rite/Speak HUD + state-driven VFX/morphs.");
+                "online Create/Join + canonical Attack/Defend/Rite/Speak HUD + " +
+                "chapter-bound enemy presentation + state-driven VFX/camera/morphs.");
         }
 
         private static void ConfigureAtmosphere()
@@ -310,20 +337,163 @@ namespace DungeonsCrows.EditorTools
             return head;
         }
 
-        private static GameObject CreateEnemyPlaceholder(Material material)
+        private static ChapterEnemyPresenter CreateEnemyPresentation(
+            Material wardenMaterial,
+            Material boneRookMaterial,
+            Material blackRookMaterial,
+            out Transform initialImpactAnchor)
         {
-            GameObject enemy =
+            GameObject presentationRoot =
+                new GameObject("Chapter Enemy Presentation");
+            ChapterEnemyPresenter presenter =
+                presentationRoot.AddComponent<ChapterEnemyPresenter>();
+
+            GameObject warden = CreateEnemyProxy(
+                "[PLACEHOLDER] Crowbound Warden",
+                new Vector3(0f, 0f, 7.5f),
+                1f,
+                wardenMaterial,
+                "Replace with production Crowbound Warden model/rig.");
+
+            GameObject boneRook = CreateEnemyProxy(
+                "[PLACEHOLDER] Bone Rook",
+                new Vector3(0f, 0f, 7.5f),
+                1.18f,
+                boneRookMaterial,
+                "Replace with production Bone Rook model/rig.");
+
+            GameObject blackRook = CreateEnemyProxy(
+                "[PLACEHOLDER] Black Rook",
+                new Vector3(0f, 0f, 7.5f),
+                1.38f,
+                blackRookMaterial,
+                "Replace with production Black Rook boss model/rig.");
+
+            Transform wardenImpact = CreateImpactAnchor(
+                warden,
+                new Vector3(0f, 2.1f, 0f));
+            Transform boneImpact = CreateImpactAnchor(
+                boneRook,
+                new Vector3(0f, 2.45f, 0f));
+            Transform blackImpact = CreateImpactAnchor(
+                blackRook,
+                new Vector3(0f, 2.85f, 0f));
+
+            presenter.Register(
+                1,
+                "warden",
+                warden,
+                null,
+                wardenImpact);
+            presenter.Register(
+                2,
+                "bone-rook",
+                boneRook,
+                null,
+                boneImpact);
+            presenter.Register(
+                3,
+                "black-rook",
+                blackRook,
+                null,
+                blackImpact);
+
+            warden.SetActive(false);
+            boneRook.SetActive(false);
+            blackRook.SetActive(false);
+
+            initialImpactAnchor = wardenImpact;
+            return presenter;
+        }
+
+        private static GameObject CreateEnemyProxy(
+            string name,
+            Vector3 position,
+            float scale,
+            Material material,
+            string replacementIntent)
+        {
+            GameObject root = new GameObject(name);
+            root.transform.position = position;
+            root.transform.localScale = Vector3.one * scale;
+
+            GameObject body =
                 GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            enemy.name = "[PLACEHOLDER] Canonical Enemy Visual";
-            enemy.transform.position = new Vector3(0f, 1f, 7.5f);
-            enemy.transform.localScale = new Vector3(1.4f, 1.6f, 1.4f);
-            enemy.GetComponent<Renderer>().sharedMaterial = material;
+            body.name = "Body";
+            body.transform.SetParent(root.transform, false);
+            body.transform.localPosition = new Vector3(0f, 1.15f, 0f);
+            body.transform.localScale =
+                new Vector3(1.3f, 1.35f, 1.05f);
+            body.GetComponent<Renderer>().sharedMaterial = material;
+            RemoveCollider(body);
+
+            GameObject head =
+                GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            head.name = "Corvid Head";
+            head.transform.SetParent(root.transform, false);
+            head.transform.localPosition = new Vector3(0f, 2.55f, 0.08f);
+            head.transform.localScale =
+                new Vector3(0.85f, 0.72f, 0.95f);
+            head.GetComponent<Renderer>().sharedMaterial = material;
+            RemoveCollider(head);
+
+            GameObject beak =
+                GameObject.CreatePrimitive(PrimitiveType.Cube);
+            beak.name = "Beak";
+            beak.transform.SetParent(root.transform, false);
+            beak.transform.localPosition =
+                new Vector3(0f, 2.52f, -0.58f);
+            beak.transform.localScale =
+                new Vector3(0.35f, 0.22f, 0.78f);
+            beak.transform.localRotation =
+                Quaternion.Euler(12f, 0f, 0f);
+            beak.GetComponent<Renderer>().sharedMaterial = material;
+            RemoveCollider(beak);
+
+            GameObject leftWing =
+                GameObject.CreatePrimitive(PrimitiveType.Cube);
+            leftWing.name = "Left Wing";
+            leftWing.transform.SetParent(root.transform, false);
+            leftWing.transform.localPosition =
+                new Vector3(-0.9f, 1.45f, 0.1f);
+            leftWing.transform.localScale =
+                new Vector3(0.35f, 1.6f, 0.9f);
+            leftWing.transform.localRotation =
+                Quaternion.Euler(0f, 0f, -24f);
+            leftWing.GetComponent<Renderer>().sharedMaterial = material;
+            RemoveCollider(leftWing);
+
+            GameObject rightWing =
+                GameObject.Instantiate(leftWing, root.transform);
+            rightWing.name = "Right Wing";
+            rightWing.transform.localPosition =
+                new Vector3(0.9f, 1.45f, 0.1f);
+            rightWing.transform.localRotation =
+                Quaternion.Euler(0f, 0f, 24f);
 
             Mark(
-                enemy,
+                root,
                 PlaceholderCategory.Creature,
-                "Replace with chapter-aware animated enemy prefabs.");
-            return enemy;
+                replacementIntent);
+
+            return root;
+        }
+
+        private static Transform CreateImpactAnchor(
+            GameObject root,
+            Vector3 localPosition)
+        {
+            GameObject anchor = new GameObject("Impact Anchor");
+            anchor.transform.SetParent(root.transform, false);
+            anchor.transform.localPosition = localPosition;
+            return anchor.transform;
+        }
+
+        private static void RemoveCollider(GameObject gameObject)
+        {
+            Collider collider = gameObject.GetComponent<Collider>();
+            if (collider != null)
+                Object.DestroyImmediate(collider);
         }
 
         private static void CreateCrowFlock(Material crowMat)
