@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace DungeonsCrows.World
 {
@@ -12,6 +11,15 @@ namespace DungeonsCrows.World
         public Vector3 localPosition;
         public Vector3 localEulerAngles;
         public Vector3 localScale = Vector3.one;
+
+        public MorphPose() { }
+
+        public MorphPose(Vector3 position, Vector3 eulerAngles, Vector3 scale)
+        {
+            localPosition = position;
+            localEulerAngles = eulerAngles;
+            localScale = scale;
+        }
     }
 
     [Serializable]
@@ -31,9 +39,8 @@ namespace DungeonsCrows.World
     }
 
     /// <summary>
-    /// Morphs authored environment geometry only after committed story boundaries.
-    /// The authoritative rules layer decides WHEN a chapter is committed; this
-    /// component only renders that committed state.
+    /// Visual-only environment morphing. The authoritative campaign decides
+    /// when a story boundary is committed; this component renders that state.
     /// </summary>
     public sealed class MorphicEnvironmentController : MonoBehaviour
     {
@@ -61,6 +68,29 @@ namespace DungeonsCrows.World
 
         public int CurrentChapter => _chapter;
         public bool IsMorphing => _activeMorph != null;
+
+        public void SetKeyLight(Light light) => keyLight = light;
+
+        public void SetMorphVfx(ParticleSystem burst, AudioSource audio = null)
+        {
+            morphBurst = burst;
+            morphAudio = audio;
+        }
+
+        public void RegisterChannel(
+            Transform target,
+            MorphPose crowCrypt,
+            MorphPose boneRookery,
+            MorphPose blackRook)
+        {
+            channels.Add(new MorphChannel
+            {
+                target = target,
+                crowCrypt = crowCrypt,
+                boneRookery = boneRookery,
+                blackRook = blackRook
+            });
+        }
 
         public void CommitStoryBoundary(int committedChapter)
         {
@@ -91,12 +121,10 @@ namespace DungeonsCrows.World
                     continue;
                 }
 
-                starts.Add(new MorphPose
-                {
-                    localPosition = channel.target.localPosition,
-                    localEulerAngles = channel.target.localEulerAngles,
-                    localScale = channel.target.localScale
-                });
+                starts.Add(new MorphPose(
+                    channel.target.localPosition,
+                    channel.target.localEulerAngles,
+                    channel.target.localScale));
             }
 
             Color startFog = RenderSettings.fogColor;
@@ -163,9 +191,16 @@ namespace DungeonsCrows.World
         private void ApplyAtmosphere(int chapter, float weight)
         {
             RenderSettings.fog = true;
-            RenderSettings.fogColor = Color.Lerp(RenderSettings.fogColor, FogFor(chapter), weight);
+            RenderSettings.fogColor = Color.Lerp(
+                RenderSettings.fogColor,
+                FogFor(chapter),
+                weight);
+
             if (keyLight != null)
-                keyLight.color = Color.Lerp(keyLight.color, LightFor(chapter), weight);
+                keyLight.color = Color.Lerp(
+                    keyLight.color,
+                    LightFor(chapter),
+                    weight);
         }
 
         private Color FogFor(int chapter)
