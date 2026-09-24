@@ -110,6 +110,9 @@ camera_feedback = text(
 crow_flock = text(
     "UnityProject/Assets/Crows/Scripts/Presentation/CrowFlockController.cs"
 )
+audio_director = text(
+    "UnityProject/Assets/Crows/Scripts/Presentation/CanonicalAudioDirector.cs"
+)
 camera = text(
     "UnityProject/Assets/Crows/Scripts/Camera/DualPerspectiveCamera.cs"
 )
@@ -135,6 +138,12 @@ require(
     and "CanonicalPresentationDelta" in crow_flock
     and "Present(" in crow_flock,
     "Crow flock is not reacting to canonical presentation cues",
+)
+require(
+    "AudioClip.Create" in audio_director
+    and "CanonicalPresentationDelta" in audio_director
+    and "EnsureReady" in audio_director,
+    "Canonical zero-cost audio fallback is missing",
 )
 
 campaign = text(
@@ -213,6 +222,11 @@ require(
     and "crowFlock" in builder,
     "Scene builder does not wire the animated crow flock",
 )
+require(
+    "CanonicalAudioDirector" in builder
+    and "audioDirector" in builder,
+    "Scene builder does not wire canonical audio",
+)
 
 landscape = text(
     "UnityProject/Assets/Crows/Scripts/World/MorphicLandscapeController.cs"
@@ -250,6 +264,7 @@ for test_name in (
     "QualityProfiles_ScaleDownWithoutChangingGameRules",
     "MorphicLandscape_SnapChangesWalkableGeometry",
     "CrowFlockController_RegistersAndChangesMode",
+    "CanonicalAudioDirector_GeneratesFallbackClips",
     "RuntimeMinimapCamera_CreatesRealRenderTexture",
     "CanonicalPresentationDelta_DerivesOnlyCommittedChanges",
     "ChapterEnemyPresenter_SelectsCanonicalChapterEnemy",
