@@ -472,12 +472,33 @@ namespace DungeonsCrows.Tests.Editor
         }
 
         [Test]
-        public void Alpha4Protocol_StillRequiresCanonicalCampaignFields()
+        public void Alpha4Protocol_RequiresCrowEssenceAndInvoke()
         {
-            Assert.AreEqual("dc-turn/2.0", OnlineProtocol.Version);
+            Assert.AreEqual(
+                "dc-turn/3.0",
+                OnlineProtocol.Version);
+
             CollectionAssert.AreEqual(
-                new[] { "attack", "defend", "interact", "speak" },
+                new[]
+                {
+                    "attack",
+                    "defend",
+                    "interact",
+                    "invoke",
+                    "speak"
+                },
                 OnlineProtocol.Actions);
+
+            var player = new CombatantDto
+            {
+                hp = 20,
+                maxHp = 20,
+                essence = 4,
+                maxEssence = 4
+            };
+
+            Assert.AreEqual(4, player.essence);
+            Assert.AreEqual(4, player.maxEssence);
         }
     }
 }
