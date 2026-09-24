@@ -17,6 +17,7 @@ namespace DungeonsCrows.Presentation
         [SerializeField] private Animator enemyAnimatorFallback;
 
         [Header("Resolved combat VFX")]
+        [SerializeField] private ParticleSystem invokeFx;
         [SerializeField] private ParticleSystem attackHitFx;
         [SerializeField] private ParticleSystem playerDamageFx;
         [SerializeField] private ParticleSystem guardFx;
@@ -32,6 +33,7 @@ namespace DungeonsCrows.Presentation
             CombatCameraFeedback combatCameraFeedback,
             CrowFlockController flockController,
             CanonicalAudioDirector canonicalAudio,
+            ParticleSystem invoke,
             ParticleSystem attackHit,
             ParticleSystem playerDamage,
             ParticleSystem guard,
@@ -46,6 +48,7 @@ namespace DungeonsCrows.Presentation
             cameraFeedback = combatCameraFeedback;
             crowFlock = flockController;
             audioDirector = canonicalAudio;
+            invokeFx = invoke;
             attackHitFx = attackHit;
             playerDamageFx = playerDamage;
             guardFx = guard;
@@ -120,6 +123,12 @@ namespace DungeonsCrows.Presentation
 
             PresentResolvedPlayerAction(
                 envelope.resolvedActionType);
+
+            if (envelope.resolvedActionType == "invoke")
+            {
+                MoveToEnemy(invokeFx);
+                Play(invokeFx);
+            }
 
             if (delta.Has(PresentationCue.EnemyDamaged))
             {
@@ -202,6 +211,12 @@ namespace DungeonsCrows.Presentation
                 case "interact":
                     if (playerAnimator != null)
                         Trigger(playerAnimator, "Rite");
+                    else
+                        playerProceduralMotion?.PlayRite();
+                    break;
+                case "invoke":
+                    if (playerAnimator != null)
+                        Trigger(playerAnimator, "Invoke");
                     else
                         playerProceduralMotion?.PlayRite();
                     break;
