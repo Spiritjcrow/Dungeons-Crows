@@ -127,6 +127,7 @@ namespace DungeonsCrows.Online
         public void Attack() => Submit("attack", string.Empty);
         public void Defend() => Submit("defend", string.Empty);
         public void Interact() => Submit("interact", string.Empty);
+        public void Invoke() => Submit("invoke", string.Empty);
         public void Speak(string text) => Submit("speak", text);
 
         private void Submit(string actionType, string freeformText)
