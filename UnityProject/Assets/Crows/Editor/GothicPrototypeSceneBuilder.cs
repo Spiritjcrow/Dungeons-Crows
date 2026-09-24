@@ -163,6 +163,14 @@ namespace DungeonsCrows.EditorTools
             chapterBridge.SetEnvironment(morph);
             chapterBridge.SetLandscape(landscape);
 
+            ParticleSystem invokeFx = CreatePrototypeBurst(
+                "[PLACEHOLDER VFX] Crowfire Invoke",
+                initialEnemyImpact.position,
+                new Color(0.08f, 0.34f, 1f),
+                72,
+                7.2f,
+                0.16f);
+
             ParticleSystem attackFx = CreatePrototypeBurst(
                 "[PLACEHOLDER VFX] Resolved Attack Hit",
                 initialEnemyImpact.position,
@@ -228,6 +236,7 @@ namespace DungeonsCrows.EditorTools
                 cameraFeedback,
                 crowFlock,
                 audioDirector,
+                invokeFx,
                 attackFx,
                 playerDamageFx,
                 guardFx,
