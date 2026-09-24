@@ -99,18 +99,22 @@ namespace DungeonsCrows.EditorTools
             CreateTorch(new Vector3(-9f, 2.5f, 9f));
             CreateTorch(new Vector3(9f, 2.5f, 9f));
 
-            GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            player.name = "[PLACEHOLDER] PlayerPawn";
-            player.transform.position = new Vector3(0f, 1f, -6f);
-            CapsuleCollider primitiveCollider = player.GetComponent<CapsuleCollider>();
-            if (primitiveCollider != null)
-                Object.DestroyImmediate(primitiveCollider);
-
+            GameObject player = new GameObject("[PLACEHOLDER] PlayerPawn");
+            player.transform.position = new Vector3(0f, 0f, -6f);
             CharacterController controller = player.AddComponent<CharacterController>();
             controller.height = 2f;
             controller.radius = 0.42f;
             controller.center = new Vector3(0f, 1f, 0f);
             Mark(player, PlaceholderCategory.Character, "Replace with HD rigged corvid warrior character.");
+
+            GameObject playerVisual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            playerVisual.name = "[PLACEHOLDER] Corvid Warrior Visual";
+            playerVisual.transform.SetParent(player.transform, false);
+            playerVisual.transform.localPosition = new Vector3(0f, 1f, 0f);
+            CapsuleCollider primitiveCollider = playerVisual.GetComponent<CapsuleCollider>();
+            if (primitiveCollider != null)
+                Object.DestroyImmediate(primitiveCollider);
+            Mark(playerVisual, PlaceholderCategory.Character, "Replace with animated HD corvid warrior mesh and rig.");
 
             GameObject head = new GameObject("First Person Anchor");
             head.transform.SetParent(player.transform, false);
