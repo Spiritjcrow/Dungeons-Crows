@@ -107,6 +107,9 @@ enemy_presenter = text(
 camera_feedback = text(
     "UnityProject/Assets/Crows/Scripts/Presentation/CombatCameraFeedback.cs"
 )
+crow_flock = text(
+    "UnityProject/Assets/Crows/Scripts/Presentation/CrowFlockController.cs"
+)
 camera = text(
     "UnityProject/Assets/Crows/Scripts/Camera/DualPerspectiveCamera.cs"
 )
@@ -126,6 +129,12 @@ require(
     "SetPresentationOffset" in camera_feedback
     and "SetPresentationOffset" in camera,
     "Combat camera feedback is not routed through the camera presentation offset",
+)
+require(
+    "CrowFlockMode" in crow_flock
+    and "CanonicalPresentationDelta" in crow_flock
+    and "Present(" in crow_flock,
+    "Crow flock is not reacting to canonical presentation cues",
 )
 
 campaign = text(
@@ -199,6 +208,11 @@ require(
     and "hud.SetMinimap(minimap)" in builder,
     "Scene builder does not wire the real minimap",
 )
+require(
+    "CreateCrowFlock" in builder
+    and "crowFlock" in builder,
+    "Scene builder does not wire the animated crow flock",
+)
 
 landscape = text(
     "UnityProject/Assets/Crows/Scripts/World/MorphicLandscapeController.cs"
@@ -235,6 +249,7 @@ for test_name in (
     "LocalHuntIdentityStore_RoundTripsAndClears",
     "QualityProfiles_ScaleDownWithoutChangingGameRules",
     "MorphicLandscape_SnapChangesWalkableGeometry",
+    "CrowFlockController_RegistersAndChangesMode",
     "RuntimeMinimapCamera_CreatesRealRenderTexture",
     "CanonicalPresentationDelta_DerivesOnlyCommittedChanges",
     "ChapterEnemyPresenter_SelectsCanonicalChapterEnemy",
