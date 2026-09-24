@@ -1,7 +1,10 @@
 {
   "name": "DungeonsCrows.Runtime",
   "rootNamespace": "DungeonsCrows",
-  "references": [],
+  "references": [
+    "Unity.InputSystem",
+    "Unity.Netcode.Runtime"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
