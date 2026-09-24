@@ -118,6 +118,8 @@ namespace DungeonsCrows.EditorTools
             CreateCrowFlock(crowMat);
 
             Camera camera = CreateCamera(player, head, out DualPerspectiveCamera cameraRig);
+            Alpha4PostProcessingSetup.AttachToScene(camera);
+
             CombatCameraFeedback cameraFeedback =
                 camera.gameObject.AddComponent<CombatCameraFeedback>();
             cameraFeedback.Configure(cameraRig);
