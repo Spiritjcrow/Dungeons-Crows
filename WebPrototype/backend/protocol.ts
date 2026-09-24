@@ -12,7 +12,7 @@ export const protocolDescriptor = {
     'campaignStatus', 'altarOpened', 'rookeryPurified', 'crownBroken',
     'relics', 'ritualAttempts', 'score', 'seed', 'lastNarration', 'log'
   ],
-  turnResponseFields: ['session', 'narration', 'diceRolls'],
+  turnResponseFields: ['session', 'narration', 'diceRolls', 'resolvedActionType'],
 } as const;
 
 export function withProtocol<T extends Record<string, unknown>>(payload: T) {
