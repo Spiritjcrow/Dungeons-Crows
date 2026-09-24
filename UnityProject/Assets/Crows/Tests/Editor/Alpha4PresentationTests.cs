@@ -156,6 +156,46 @@ namespace DungeonsCrows.Tests.Editor
         }
 
         [Test]
+        public void CrowFlockController_RegistersAndChangesMode()
+        {
+            GameObject root =
+                new GameObject("Crow Flock Test");
+            GameObject target =
+                new GameObject("Target");
+            GameObject crow =
+                new GameObject("Crow");
+
+            try
+            {
+                CrowFlockController flock =
+                    root.AddComponent<CrowFlockController>();
+
+                flock.SetTarget(target.transform);
+                flock.RegisterCrow(crow.transform);
+
+                Assert.AreEqual(
+                    1,
+                    flock.CrowCount);
+                Assert.AreEqual(
+                    CrowFlockMode.Orbit,
+                    flock.Mode);
+
+                flock.SetMode(
+                    CrowFlockMode.Victory);
+
+                Assert.AreEqual(
+                    CrowFlockMode.Victory,
+                    flock.Mode);
+            }
+            finally
+            {
+                Object.DestroyImmediate(crow);
+                Object.DestroyImmediate(target);
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void RuntimeMinimapCamera_CreatesRealRenderTexture()
         {
             GameObject player =
