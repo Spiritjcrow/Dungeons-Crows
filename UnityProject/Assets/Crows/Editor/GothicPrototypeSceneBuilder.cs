@@ -104,6 +104,8 @@ namespace DungeonsCrows.EditorTools
             CreateTorch(new Vector3(9f, 2.5f, 9f));
 
             GameObject player = CreatePlayer();
+            ProceduralActorMotion playerMotion =
+                player.GetComponentInChildren<ProceduralActorMotion>();
             GameObject head = CreateFirstPersonAnchor(player);
             ChapterEnemyPresenter enemyPresenter =
                 CreateEnemyPresentation(
@@ -219,6 +221,9 @@ namespace DungeonsCrows.EditorTools
                 ritualFx,
                 victoryFx,
                 defeatFx);
+            presentation.SetPlayerPresentation(
+                null,
+                playerMotion);
 
             CreateHud(campaign);
 
@@ -233,7 +238,7 @@ namespace DungeonsCrows.EditorTools
                 scenePath +
                 " | WASD/gamepad move · Shift sprint · Space jump · V first/third person · " +
                 "online Create/Join + canonical Attack/Defend/Rite/Speak HUD + " +
-                "chapter-bound enemy presentation + state-driven VFX/camera/morphs.");
+                "chapter enemies + procedural motion fallback + state-driven VFX/camera/morphs.");
         }
 
         private static void ConfigureAtmosphere()
@@ -326,6 +331,8 @@ namespace DungeonsCrows.EditorTools
                 PlaceholderCategory.Character,
                 "Replace with animated HD corvid warrior mesh and rig.");
 
+            visual.AddComponent<ProceduralActorMotion>();
+
             return player;
         }
 
@@ -384,18 +391,21 @@ namespace DungeonsCrows.EditorTools
                 "warden",
                 warden,
                 null,
+                warden.GetComponent<ProceduralActorMotion>(),
                 wardenImpact);
             presenter.Register(
                 2,
                 "bone-rook",
                 boneRook,
                 null,
+                boneRook.GetComponent<ProceduralActorMotion>(),
                 boneImpact);
             presenter.Register(
                 3,
                 "black-rook",
                 blackRook,
                 null,
+                blackRook.GetComponent<ProceduralActorMotion>(),
                 blackImpact);
 
             warden.SetActive(false);
@@ -475,6 +485,8 @@ namespace DungeonsCrows.EditorTools
                 root,
                 PlaceholderCategory.Creature,
                 replacementIntent);
+
+            root.AddComponent<ProceduralActorMotion>();
 
             return root;
         }
