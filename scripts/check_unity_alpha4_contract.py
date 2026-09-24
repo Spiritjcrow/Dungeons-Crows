@@ -80,10 +80,19 @@ require("DungeonsCrows.Runtime" in tests_refs, "Tests asmdef missing runtime ref
 require("TestAssemblies" in tests_optional, "Tests asmdef is not marked as a test assembly")
 
 protocol = text("UnityProject/Assets/Crows/Scripts/Online/OnlineProtocol.cs")
-require('Version = "dc-turn/2.0"' in protocol, "Unity protocol is not dc-turn/2.0")
+require('Version = "dc-turn/3.0"' in protocol, "Unity protocol is not dc-turn/3.0")
+require(
+    'public int essence;' in protocol
+    and 'public int maxEssence;' in protocol,
+    "Unity CombatantDto is missing Crow Essence fields",
+)
+require(
+    '"invoke"' in protocol,
+    "Unity protocol action vocabulary is missing Invoke",
+)
 
 hud = text("UnityProject/Assets/Crows/Scripts/UI/Alpha4HudController.cs")
-for token in ("digit1Key", "digit2Key", "digit3Key", "digit4Key"):
+for token in ("digit1Key", "digit2Key", "digit3Key", "digit4Key", "digit5Key"):
     require(token in hud, f"Alpha 4 HUD missing functional hotkey: {token}")
 require("campaign?.LeaveHunt()" in hud, "Alpha 4 HUD missing functional Leave Hunt")
 require(
@@ -93,6 +102,13 @@ require(
 require(
     "_minimapImage" in hud and "minimap.Texture" in hud,
     "Alpha 4 HUD is not rendering a real minimap texture",
+)
+require(
+    "_playerEssenceFill" in hud
+    and "_playerEssenceText" in hud
+    and "_invokeButton" in hud
+    and "player.essence >= 2" in hud,
+    "Alpha 4 HUD does not expose authoritative Crow Essence and Invoke",
 )
 
 presentation = text(
@@ -145,6 +161,16 @@ require(
     and "EnsureReady" in audio_director,
     "Canonical zero-cost audio fallback is missing",
 )
+require(
+    'case "invoke":' in audio_director
+    and "invokeClip" in audio_director,
+    "Canonical audio does not present Invoke",
+)
+require(
+    'case "invoke":' in presentation
+    and "invokeFx" in presentation,
+    "Canonical presentation does not present Invoke",
+)
 
 campaign = text(
     "UnityProject/Assets/Crows/Scripts/Online/OnlineCampaignController.cs"
@@ -157,6 +183,10 @@ require(
 require(
     "SilentPartyRefreshRoutine" in campaign,
     "Unity waiting-party synchronization fallback is missing",
+)
+require(
+    'public void Invoke() => Submit("invoke"' in campaign,
+    "Unity campaign controller does not expose Invoke",
 )
 
 render_setup = text(
@@ -227,6 +257,11 @@ require(
     and "audioDirector" in builder,
     "Scene builder does not wire canonical audio",
 )
+require(
+    "Crowfire Invoke" in builder
+    and "invokeFx" in builder,
+    "Scene builder does not wire Invoke crowfire VFX",
+)
 
 landscape = text(
     "UnityProject/Assets/Crows/Scripts/World/MorphicLandscapeController.cs"
@@ -268,6 +303,7 @@ for test_name in (
     "RuntimeMinimapCamera_CreatesRealRenderTexture",
     "CanonicalPresentationDelta_DerivesOnlyCommittedChanges",
     "ChapterEnemyPresenter_SelectsCanonicalChapterEnemy",
+    "Alpha4Protocol_RequiresCrowEssenceAndInvoke",
 ):
     require(test_name in tests, f"Missing Alpha 4 regression test: {test_name}")
 
@@ -280,7 +316,9 @@ if errors:
 print("Dungeons & Crows Alpha 4 static contract OK")
 print(" unity=6000.0.65f1")
 print(" urp=17.0.4")
-print(" protocol=dc-turn/2.0")
+print(" protocol=dc-turn/3.0")
+print(" resource=crow-essence")
+print(" invoke=authoritative")
 print(" input=real hotkeys")
 print(" persistence=resume/leave")
 print(" multiplayer=waiting-party refresh fallback")
