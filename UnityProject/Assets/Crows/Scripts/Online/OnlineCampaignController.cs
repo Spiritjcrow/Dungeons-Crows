@@ -8,6 +8,7 @@ namespace DungeonsCrows.Online
     {
         [SerializeField] private OnlineGameClient client;
         [SerializeField] private bool verifyProtocolOnStart = true;
+        [SerializeField] private bool resumeSavedHunt = true;
 
         private bool _busy;
         private bool _protocolReady;
@@ -59,7 +60,11 @@ namespace DungeonsCrows.Online
         public void JoinHunt(string code, string playerName)
         {
             if (!CanStartSession(playerName)) return;
-            string normalized = (code ?? string.Empty).Trim().ToUpperInvariant();
+
+            string normalized = (code ?? string.Empty)
+                .Trim()
+                .ToUpperInvariant();
+
             if (normalized.Length != 6)
             {
                 RaiseError("Hunt code must be six characters.");
@@ -75,6 +80,17 @@ namespace DungeonsCrows.Online
             StartCoroutine(RefreshRoutine(_session.code));
         }
 
+        public void LeaveHunt()
+        {
+            if (_busy) return;
+
+            LocalHuntIdentityStore.Clear();
+            _playerId = string.Empty;
+            _playerName = string.Empty;
+            _session = null;
+            SessionChanged?.Invoke(null);
+        }
+
         public void Attack() => Submit("attack", string.Empty);
         public void Defend() => Submit("defend", string.Empty);
         public void Interact() => Submit("interact", string.Empty);
@@ -83,13 +99,20 @@ namespace DungeonsCrows.Online
         private void Submit(string actionType, string freeformText)
         {
             if (_busy || client == null || _session == null) return;
-            if (!string.Equals(_session.campaignStatus, "active", StringComparison.Ordinal))
+
+            if (!string.Equals(
+                    _session.campaignStatus,
+                    "active",
+                    StringComparison.Ordinal))
             {
                 RaiseError("This Hunt has already ended.");
                 return;
             }
 
-            if (!string.Equals(_session.activeActorId, _playerId, StringComparison.Ordinal))
+            if (!string.Equals(
+                    _session.activeActorId,
+                    _playerId,
+                    StringComparison.Ordinal))
             {
                 RaiseError("It is not your turn.");
                 return;
@@ -105,8 +128,13 @@ namespace DungeonsCrows.Online
                 connectionId = string.Empty
             };
 
-            if (intent.freeformText.Length > OnlineProtocol.MaxFreeformTextLength)
-                intent.freeformText = intent.freeformText.Substring(0, OnlineProtocol.MaxFreeformTextLength);
+            if (intent.freeformText.Length >
+                OnlineProtocol.MaxFreeformTextLength)
+            {
+                intent.freeformText = intent.freeformText.Substring(
+                    0,
+                    OnlineProtocol.MaxFreeformTextLength);
+            }
 
             StartCoroutine(SubmitRoutine(_session.code, intent));
         }
@@ -115,11 +143,13 @@ namespace DungeonsCrows.Online
         {
             SetBusy(true);
             bool done = false;
+            bool verified = false;
 
             yield return client.VerifyProtocol(
                 _ =>
                 {
                     _protocolReady = true;
+                    verified = true;
                     ProtocolReadyChanged?.Invoke(true);
                     done = true;
                 },
@@ -132,7 +162,15 @@ namespace DungeonsCrows.Online
                 });
 
             SetBusy(false);
-            if (!done) RaiseError("Protocol verification did not complete.");
+
+            if (!done)
+            {
+                RaiseError("Protocol verification did not complete.");
+                yield break;
+            }
+
+            if (verified && resumeSavedHunt && _session == null)
+                TryResumeSavedHunt();
         }
 
         private IEnumerator CreateRoutine(string playerName)
@@ -144,6 +182,7 @@ namespace DungeonsCrows.Online
             }
 
             SetBusy(true);
+
             yield return client.CreateSession(
                 playerName,
                 envelope =>
@@ -151,12 +190,16 @@ namespace DungeonsCrows.Online
                     _playerName = playerName;
                     _playerId = envelope.playerId ?? string.Empty;
                     SetSession(envelope.session);
+                    SaveIdentity();
                 },
                 RaiseError);
+
             SetBusy(false);
         }
 
-        private IEnumerator JoinRoutine(string code, string playerName)
+        private IEnumerator JoinRoutine(
+            string code,
+            string playerName)
         {
             if (!_protocolReady)
             {
@@ -165,6 +208,7 @@ namespace DungeonsCrows.Online
             }
 
             SetBusy(true);
+
             yield return client.JoinSession(
                 code,
                 playerName,
@@ -173,22 +217,74 @@ namespace DungeonsCrows.Online
                     _playerName = playerName;
                     _playerId = envelope.playerId ?? string.Empty;
                     SetSession(envelope.session);
+                    SaveIdentity();
                 },
                 RaiseError);
+
             SetBusy(false);
         }
 
         private IEnumerator RefreshRoutine(string code)
         {
             SetBusy(true);
+
             yield return client.LoadSession(
                 code,
                 envelope => SetSession(envelope.session),
                 RaiseError);
+
             SetBusy(false);
         }
 
-        private IEnumerator SubmitRoutine(string code, TurnRequestDto intent)
+        private void TryResumeSavedHunt()
+        {
+            if (_busy || client == null || _session != null)
+                return;
+
+            if (!LocalHuntIdentityStore.TryLoad(
+                    out LocalHuntIdentity identity))
+            {
+                return;
+            }
+
+            StartCoroutine(ResumeRoutine(identity));
+        }
+
+        private IEnumerator ResumeRoutine(LocalHuntIdentity identity)
+        {
+            SetBusy(true);
+            bool loaded = false;
+
+            yield return client.LoadSession(
+                identity.code,
+                envelope =>
+                {
+                    GameSessionDto session = envelope.session;
+
+                    if (!ContainsPlayer(session, identity.playerId))
+                    {
+                        LocalHuntIdentityStore.Clear();
+                        RaiseError(
+                            "Saved Hunt identity is no longer valid for this party.");
+                        return;
+                    }
+
+                    _playerId = identity.playerId;
+                    _playerName = identity.playerName;
+                    SetSession(session);
+                    loaded = true;
+                },
+                RaiseError);
+
+            SetBusy(false);
+
+            if (loaded)
+                SaveIdentity();
+        }
+
+        private IEnumerator SubmitRoutine(
+            string code,
+            TurnRequestDto intent)
         {
             SetBusy(true);
             GameSessionDto before = _session;
@@ -210,6 +306,7 @@ namespace DungeonsCrows.Online
         private bool CanStartSession(string playerName)
         {
             if (_busy || client == null) return false;
+
             if (!_protocolReady)
             {
                 RaiseError("Online protocol is not ready.");
@@ -217,7 +314,9 @@ namespace DungeonsCrows.Online
             }
 
             string clean = (playerName ?? string.Empty).Trim();
-            if (clean.Length < 2 || clean.Length > OnlineProtocol.MaxPlayerNameLength)
+
+            if (clean.Length < 2 ||
+                clean.Length > OnlineProtocol.MaxPlayerNameLength)
             {
                 RaiseError("Player name must be 2-24 characters.");
                 return false;
@@ -226,7 +325,45 @@ namespace DungeonsCrows.Online
             return true;
         }
 
-        private static string TargetFor(string actionType, GameSessionDto session)
+        private void SaveIdentity()
+        {
+            if (_session == null)
+                return;
+
+            LocalHuntIdentityStore.Save(
+                _session.code,
+                _playerId,
+                _playerName);
+        }
+
+        private static bool ContainsPlayer(
+            GameSessionDto session,
+            string playerId)
+        {
+            if (session?.party == null ||
+                string.IsNullOrWhiteSpace(playerId))
+            {
+                return false;
+            }
+
+            foreach (CombatantDto member in session.party)
+            {
+                if (member != null &&
+                    string.Equals(
+                        member.id,
+                        playerId,
+                        StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string TargetFor(
+            string actionType,
+            GameSessionDto session)
         {
             if (actionType == "interact")
             {
@@ -235,7 +372,9 @@ namespace DungeonsCrows.Online
                 return "altar";
             }
 
-            return session.enemy != null ? session.enemy.id : string.Empty;
+            return session.enemy != null
+                ? session.enemy.id
+                : string.Empty;
         }
 
         private void SetSession(GameSessionDto session)
@@ -247,15 +386,17 @@ namespace DungeonsCrows.Online
         private void SetBusy(bool busy)
         {
             if (_busy == busy) return;
+
             _busy = busy;
             BusyChanged?.Invoke(_busy);
         }
 
         private void RaiseError(string message)
         {
-            ErrorRaised?.Invoke(string.IsNullOrWhiteSpace(message)
-                ? "Unknown online error."
-                : message);
+            ErrorRaised?.Invoke(
+                string.IsNullOrWhiteSpace(message)
+                    ? "Unknown online error."
+                    : message);
         }
     }
 }
