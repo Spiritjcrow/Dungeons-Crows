@@ -82,6 +82,43 @@ hud = text("UnityProject/Assets/Crows/Scripts/UI/Alpha4HudController.cs")
 for token in ("digit1Key", "digit2Key", "digit3Key", "digit4Key"):
     require(token in hud, f"Alpha 4 HUD missing functional hotkey: {token}")
 require("campaign?.LeaveHunt()" in hud, "Alpha 4 HUD missing functional Leave Hunt")
+require(
+    "_narrationLabel" in hud and "session.lastNarration" in hud,
+    "Alpha 4 HUD is not rendering canonical Dungeon Master narration",
+)
+
+presentation = text(
+    "UnityProject/Assets/Crows/Scripts/Presentation/CanonicalCombatPresentationBridge.cs"
+)
+delta = text(
+    "UnityProject/Assets/Crows/Scripts/Presentation/CanonicalPresentationDelta.cs"
+)
+enemy_presenter = text(
+    "UnityProject/Assets/Crows/Scripts/Presentation/ChapterEnemyPresenter.cs"
+)
+camera_feedback = text(
+    "UnityProject/Assets/Crows/Scripts/Presentation/CombatCameraFeedback.cs"
+)
+camera = text(
+    "UnityProject/Assets/Crows/Scripts/Camera/DualPerspectiveCamera.cs"
+)
+require(
+    "envelope.resolvedActionType" in presentation,
+    "Combat presentation is not using authoritative resolved action type",
+)
+require(
+    "PresentationCue" in delta and "CanonicalPresentationDelta.From" in delta,
+    "Canonical presentation delta layer is missing",
+)
+require(
+    "expectedEnemyId" in enemy_presenter and "ApplyCanonicalSession" in enemy_presenter,
+    "Chapter-aware enemy presentation binding is missing",
+)
+require(
+    "SetPresentationOffset" in camera_feedback
+    and "SetPresentationOffset" in camera,
+    "Combat camera feedback is not routed through the camera presentation offset",
+)
 
 campaign = text(
     "UnityProject/Assets/Crows/Scripts/Online/OnlineCampaignController.cs"
@@ -125,9 +162,12 @@ tests = text(
 )
 for test_name in (
     "DualPerspectiveCamera_SwitchesFirstAndThirdPerson",
+    "DualPerspectiveCamera_PresentationOffsetRoundTrips",
     "MorphicEnvironment_SnapAppliesChapterPoseExactly",
     "LocalHuntIdentityStore_RoundTripsAndClears",
     "QualityProfiles_ScaleDownWithoutChangingGameRules",
+    "CanonicalPresentationDelta_DerivesOnlyCommittedChanges",
+    "ChapterEnemyPresenter_SelectsCanonicalChapterEnemy",
 ):
     require(test_name in tests, f"Missing Alpha 4 regression test: {test_name}")
 
