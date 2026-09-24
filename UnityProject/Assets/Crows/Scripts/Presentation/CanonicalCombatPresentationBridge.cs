@@ -10,6 +10,7 @@ namespace DungeonsCrows.Presentation
         [SerializeField] private ChapterVisualStateBridge chapterVisuals;
         [SerializeField] private ChapterEnemyPresenter enemyPresenter;
         [SerializeField] private CombatCameraFeedback cameraFeedback;
+        [SerializeField] private CrowFlockController crowFlock;
         [SerializeField] private Animator playerAnimator;
         [SerializeField] private ProceduralActorMotion playerProceduralMotion;
         [SerializeField] private Animator enemyAnimatorFallback;
@@ -28,6 +29,7 @@ namespace DungeonsCrows.Presentation
             ChapterVisualStateBridge chapterBridge,
             ChapterEnemyPresenter chapterEnemyPresenter,
             CombatCameraFeedback combatCameraFeedback,
+            CrowFlockController flockController,
             ParticleSystem attackHit,
             ParticleSystem playerDamage,
             ParticleSystem guard,
@@ -40,6 +42,7 @@ namespace DungeonsCrows.Presentation
             chapterVisuals = chapterBridge;
             enemyPresenter = chapterEnemyPresenter;
             cameraFeedback = combatCameraFeedback;
+            crowFlock = flockController;
             attackHitFx = attackHit;
             playerDamageFx = playerDamage;
             guardFx = guard;
@@ -83,6 +86,7 @@ namespace DungeonsCrows.Presentation
             {
                 enemyPresenter?.ApplyCanonicalSession(null);
                 playerProceduralMotion?.ResetPose();
+                crowFlock?.SetMode(CrowFlockMode.Orbit);
                 return;
             }
 
@@ -106,6 +110,7 @@ namespace DungeonsCrows.Presentation
 
             enemyPresenter?.PresentDelta(delta, after);
             cameraFeedback?.Present(delta);
+            crowFlock?.Present(delta);
 
             PresentResolvedPlayerAction(
                 envelope.resolvedActionType);
