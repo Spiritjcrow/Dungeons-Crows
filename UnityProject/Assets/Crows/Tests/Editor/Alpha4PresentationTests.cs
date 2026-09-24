@@ -156,6 +156,45 @@ namespace DungeonsCrows.Tests.Editor
         }
 
         [Test]
+        public void RuntimeMinimapCamera_CreatesRealRenderTexture()
+        {
+            GameObject player =
+                new GameObject("Minimap Player");
+            GameObject cameraObject =
+                new GameObject("Minimap Camera");
+            cameraObject.AddComponent<Camera>();
+
+            try
+            {
+                RuntimeMinimapCamera minimap =
+                    cameraObject.AddComponent<RuntimeMinimapCamera>();
+
+                minimap.Configure(
+                    player.transform,
+                    20f,
+                    10f,
+                    256);
+
+                RenderTexture texture =
+                    minimap.Texture;
+
+                Assert.IsNotNull(texture);
+                Assert.AreEqual(256, texture.width);
+                Assert.AreEqual(256, texture.height);
+                Assert.AreSame(
+                    texture,
+                    cameraObject
+                        .GetComponent<Camera>()
+                        .targetTexture);
+            }
+            finally
+            {
+                Object.DestroyImmediate(cameraObject);
+                Object.DestroyImmediate(player);
+            }
+        }
+
+        [Test]
         public void QualityProfiles_ScaleDownWithoutChangingGameRules()
         {
             Alpha4QualityProfile cinematic =
