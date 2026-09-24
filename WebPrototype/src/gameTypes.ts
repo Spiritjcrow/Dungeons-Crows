@@ -1,4 +1,4 @@
-export type ActionType = 'attack' | 'defend' | 'interact' | 'speak';
+export type ActionType = 'attack' | 'defend' | 'interact' | 'invoke' | 'speak';
 export type CampaignStatus = 'active' | 'victory' | 'defeat';
 
 export type Combatant = {
@@ -6,6 +6,8 @@ export type Combatant = {
   name: string;
   hp: number;
   maxHp: number;
+  essence: number;
+  maxEssence: number;
   defense: number;
   isEnemy: boolean;
   defendingUntilTurn?: number;
@@ -43,7 +45,9 @@ export function chapterTitle(chapter: number): string {
 }
 
 export function objectiveFor(session: GameSession) {
-  if (session.chapter === 2) return { id: 'rookery', label: 'Cleanse Rookery', complete: session.rookeryPurified };
-  if (session.chapter === 3) return { id: 'crown', label: 'Break Crown', complete: session.crownBroken };
+  if (session.chapter === 2)
+    return { id: 'rookery', label: 'Cleanse Rookery', complete: session.rookeryPurified };
+  if (session.chapter === 3)
+    return { id: 'crown', label: 'Break Crown', complete: session.crownBroken };
   return { id: 'altar', label: 'Awaken Altar', complete: session.altarOpened };
 }
