@@ -72,6 +72,10 @@ require(
     "Unity.RenderPipelines.Universal.Runtime" in editor_refs,
     "Editor asmdef missing URP runtime reference",
 )
+require(
+    "Unity.RenderPipelines.Core.Runtime" in editor_refs,
+    "Editor asmdef missing render-pipeline core reference",
+)
 require("DungeonsCrows.Runtime" in tests_refs, "Tests asmdef missing runtime reference")
 require("TestAssemblies" in tests_optional, "Tests asmdef is not marked as a test assembly")
 
@@ -136,6 +140,9 @@ require(
 render_setup = text(
     "UnityProject/Assets/Crows/Editor/Alpha4RenderPipelineSetup.cs"
 )
+post_setup = text(
+    "UnityProject/Assets/Crows/Editor/Alpha4PostProcessingSetup.cs"
+)
 for token in (
     "UniversalRenderPipelineAsset.Create",
     "GraphicsSettings.defaultRenderPipeline",
@@ -145,12 +152,29 @@ for token in (
 ):
     require(token in render_setup, f"Alpha 4 URP setup missing: {token}")
 
+for token in (
+    "TonemappingMode.ACES",
+    "Bloom",
+    "ColorAdjustments",
+    "WhiteBalance",
+    "Vignette",
+    "renderPostProcessing = true",
+):
+    require(
+        token in post_setup,
+        f"Alpha 4 post-processing setup missing: {token}",
+    )
+
 builder = text(
     "UnityProject/Assets/Crows/Editor/GothicPrototypeSceneBuilder.cs"
 )
 require(
     "Alpha4RenderPipelineSetup.EnsureConfigured()" in builder,
     "Scene builder does not configure URP before creating the scene",
+)
+require(
+    "Alpha4PostProcessingSetup.AttachToScene(camera)" in builder,
+    "Scene builder does not attach Alpha 4 post-processing",
 )
 require(
     "Alpha4QualityDirector" in builder,
