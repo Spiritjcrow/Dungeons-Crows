@@ -6,12 +6,12 @@ namespace DungeonsCrows.Presentation
 {
     /// <summary>
     /// Lightweight camera impulse driven only by resolved canonical cues.
-    /// It is presentation-only and cannot affect combat state.
+    /// It writes to the camera rig's presentation offset rather than fighting
+    /// the first/third-person follow transform.
     /// </summary>
     public sealed class CombatCameraFeedback : MonoBehaviour
     {
         [SerializeField] private DualPerspectiveCamera cameraRig;
-        [SerializeField] private Transform cameraTransform;
         [SerializeField] private float hitDuration = 0.11f;
         [SerializeField] private float hitAmplitude = 0.07f;
         [SerializeField] private float damageDuration = 0.16f;
@@ -20,14 +20,10 @@ namespace DungeonsCrows.Presentation
         [SerializeField] private float ritualAmplitude = 0.045f;
 
         private Coroutine _impulse;
-        private Vector3 _offset;
 
-        public void Configure(
-            DualPerspectiveCamera rig,
-            Transform targetTransform)
+        public void Configure(DualPerspectiveCamera rig)
         {
             cameraRig = rig;
-            cameraTransform = targetTransform;
         }
 
         public void Present(CanonicalPresentationDelta delta)
@@ -52,8 +48,12 @@ namespace DungeonsCrows.Presentation
                 amplitude = ritualAmplitude;
             }
 
-            if (duration <= 0f || amplitude <= 0f)
+            if (cameraRig == null ||
+                duration <= 0f ||
+                amplitude <= 0f)
+            {
                 return;
+            }
 
             if (_impulse != null)
                 StopCoroutine(_impulse);
@@ -66,12 +66,6 @@ namespace DungeonsCrows.Presentation
             float duration,
             float amplitude)
         {
-            if (cameraTransform == null)
-            {
-                _impulse = null;
-                yield break;
-            }
-
             float elapsed = 0f;
 
             while (elapsed < duration)
@@ -85,18 +79,13 @@ namespace DungeonsCrows.Presentation
                     amplitude *
                     fade;
 
-                Vector3 nextOffset =
-                    new Vector3(circle.x, circle.y, 0f);
+                cameraRig.SetPresentationOffset(
+                    new Vector3(circle.x, circle.y, 0f));
 
-                cameraTransform.localPosition +=
-                    nextOffset - _offset;
-
-                _offset = nextOffset;
                 yield return null;
             }
 
-            cameraTransform.localPosition -= _offset;
-            _offset = Vector3.zero;
+            cameraRig.ClearPresentationOffset();
             _impulse = null;
         }
 
@@ -105,10 +94,9 @@ namespace DungeonsCrows.Presentation
             if (_impulse != null)
                 StopCoroutine(_impulse);
 
-            if (cameraTransform != null)
-                cameraTransform.localPosition -= _offset;
+            if (cameraRig != null)
+                cameraRig.ClearPresentationOffset();
 
-            _offset = Vector3.zero;
             _impulse = null;
         }
     }
