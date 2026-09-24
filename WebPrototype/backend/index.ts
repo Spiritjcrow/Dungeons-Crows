@@ -71,10 +71,13 @@ export const handler = router({
         const stored = await loadSession(params.code || '');
         if (!stored)
           return error('No hunt exists under that session code.', 404);
+
         const data = bodyObject(body);
         const action = String(data.actionType || '') as ActionType;
-        if (!['attack', 'defend', 'interact', 'speak'].includes(action))
+
+        if (!['attack', 'defend', 'interact', 'invoke', 'speak'].includes(action))
           return error('Unknown action.', 400);
+
         const resolution = resolveTurn(stored.session, {
           sessionId: stored.session.code,
           actorId: String(data.actorId || ''),
@@ -85,31 +88,40 @@ export const handler = router({
             ? String(data.freeformText).slice(0, 240)
             : undefined,
         });
+
         if (!resolution.accepted)
           return error(resolution.deterministicResult, 409);
+
         const narration = await narrate(resolution, stored.session.log);
         resolution.state.lastNarration = narration;
+
         resolution.state.log.push({
           turn: stored.session.turnNumber,
           kind: 'action',
           text: resolution.deterministicResult,
         });
+
         resolution.state.log.push({
           turn: stored.session.turnNumber,
           kind: 'dm',
           text: narration,
         });
+
         resolution.state.log = resolution.state.log.slice(-40);
+
         await saveSession(stored.id, resolution.state);
+
         const connectionId = data.connectionId
           ? String(data.connectionId)
           : undefined;
+
         await notifySubscribers(
           'game-session',
           resolution.state.code,
           resolution.state,
           connectionId
         );
+
         return json(withProtocol({
           session: resolution.state,
           narration,
