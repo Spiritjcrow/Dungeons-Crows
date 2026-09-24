@@ -152,6 +152,8 @@ namespace DungeonsCrows.EditorTools
 
             GameObject onlineRoot = new GameObject("Online Campaign Runtime");
             OnlineGameClient onlineClient = onlineRoot.AddComponent<OnlineGameClient>();
+            CanonicalAudioDirector audioDirector =
+                onlineRoot.AddComponent<CanonicalAudioDirector>();
             OnlineCampaignController campaign =
                 onlineRoot.AddComponent<OnlineCampaignController>();
             campaign.SetClient(onlineClient);
@@ -225,6 +227,7 @@ namespace DungeonsCrows.EditorTools
                 enemyPresenter,
                 cameraFeedback,
                 crowFlock,
+                audioDirector,
                 attackFx,
                 playerDamageFx,
                 guardFx,
