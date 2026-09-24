@@ -65,6 +65,8 @@ namespace DungeonsCrows.EditorTools
                 0.46f);
 
             CreateWorldShell(stone);
+            MorphicLandscapeController landscape =
+                CreateMorphicLandscape(stone);
 
             GameObject altar = CreateBox(
                 "[PLACEHOLDER] Central Altar",
@@ -150,6 +152,7 @@ namespace DungeonsCrows.EditorTools
             ChapterVisualStateBridge chapterBridge =
                 onlineRoot.AddComponent<ChapterVisualStateBridge>();
             chapterBridge.SetEnvironment(morph);
+            chapterBridge.SetLandscape(landscape);
 
             ParticleSystem attackFx = CreatePrototypeBurst(
                 "[PLACEHOLDER VFX] Resolved Attack Hit",
@@ -238,7 +241,8 @@ namespace DungeonsCrows.EditorTools
                 scenePath +
                 " | WASD/gamepad move · Shift sprint · Space jump · V first/third person · " +
                 "online Create/Join + canonical Attack/Defend/Rite/Speak HUD + " +
-                "chapter enemies + procedural motion fallback + state-driven VFX/camera/morphs.");
+                "chapter enemies + procedural motion fallback + state-driven VFX/camera + " +
+                "architecture and walkable landscape morphs.");
         }
 
         private static void ConfigureAtmosphere()
@@ -256,12 +260,12 @@ namespace DungeonsCrows.EditorTools
         private static void CreateWorldShell(Material stone)
         {
             CreateBox(
-                "[PLACEHOLDER] Floor",
-                new Vector3(0f, -0.25f, 0f),
-                new Vector3(28f, 0.5f, 28f),
+                "[SAFETY] Foundation Below Morphic Landscape",
+                new Vector3(0f, -1.5f, 0f),
+                new Vector3(28f, 1f, 28f),
                 stone,
                 PlaceholderCategory.Environment,
-                "Replace with HD modular gothic terrain.");
+                "Buried safety foundation; production traversal uses the morphic landscape mesh.");
 
             for (int i = -7; i <= 7; i++)
             {
@@ -297,6 +301,25 @@ namespace DungeonsCrows.EditorTools
                     PlaceholderCategory.Environment,
                     "Replace with gothic keep/cathedral wall.");
             }
+        }
+
+        private static MorphicLandscapeController CreateMorphicLandscape(
+            Material material)
+        {
+            GameObject root =
+                new GameObject("Morphic Landscape");
+            root.transform.position = Vector3.zero;
+
+            MorphicLandscapeController landscape =
+                root.AddComponent<MorphicLandscapeController>();
+            landscape.Configure(
+                material,
+                28f,
+                28f,
+                29);
+            landscape.SnapToChapter(1);
+
+            return landscape;
         }
 
         private static GameObject CreatePlayer()
