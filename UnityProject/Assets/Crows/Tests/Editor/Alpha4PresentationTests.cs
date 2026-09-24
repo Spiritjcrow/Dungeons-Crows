@@ -107,6 +107,55 @@ namespace DungeonsCrows.Tests.Editor
 
 
         [Test]
+        public void MorphicLandscape_SnapChangesWalkableGeometry()
+        {
+            GameObject root =
+                new GameObject("Morphic Landscape Test");
+
+            try
+            {
+                MorphicLandscapeController landscape =
+                    root.AddComponent<MorphicLandscapeController>();
+
+                landscape.Configure(
+                    null,
+                    12f,
+                    12f,
+                    11);
+
+                landscape.SnapToChapter(1);
+
+                MeshFilter filter =
+                    root.GetComponent<MeshFilter>();
+                Assert.IsNotNull(filter.sharedMesh);
+                Assert.AreEqual(
+                    121,
+                    landscape.VertexCount);
+
+                float chapterOneHeight =
+                    filter.sharedMesh.vertices[0].y;
+
+                landscape.SnapToChapter(3);
+
+                float chapterThreeHeight =
+                    filter.sharedMesh.vertices[0].y;
+
+                Assert.AreEqual(
+                    3,
+                    landscape.CurrentChapter);
+                Assert.AreNotEqual(
+                    chapterOneHeight,
+                    chapterThreeHeight);
+                Assert.IsNotNull(
+                    root.GetComponent<MeshCollider>().sharedMesh);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void QualityProfiles_ScaleDownWithoutChangingGameRules()
         {
             Alpha4QualityProfile cinematic =
