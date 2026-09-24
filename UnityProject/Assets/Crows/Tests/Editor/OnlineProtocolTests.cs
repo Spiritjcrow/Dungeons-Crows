@@ -11,7 +11,7 @@ namespace DungeonsCrows.Tests.Editor
         {
             Assert.IsTrue(
                 ProtocolCompatibility.IsCompatible(
-                    "dc-turn/2.0"));
+                    "dc-turn/3.0"));
         }
 
         [Test]
@@ -19,52 +19,64 @@ namespace DungeonsCrows.Tests.Editor
         {
             Assert.IsFalse(
                 ProtocolCompatibility.IsCompatible(
-                    "dc-turn/1.0"));
+                    "dc-turn/2.0"));
             Assert.IsFalse(
                 ProtocolCompatibility.IsCompatible(
                     string.Empty));
         }
 
         [Test]
-        public void ProtocolDescriptor_ParsesCampaignContract()
+        public void ProtocolDescriptor_ParsesCampaignAndEssenceContract()
         {
             const string json =
-                "{\"protocolVersion\":\"dc-turn/2.0\"," +
+                "{\"protocolVersion\":\"dc-turn/3.0\"," +
                 "\"sessionEntityType\":\"game-session\"," +
-                "\"actions\":[\"attack\",\"defend\",\"interact\",\"speak\"]," +
+                "\"actions\":[\"attack\",\"defend\",\"interact\",\"invoke\",\"speak\"]," +
                 "\"limits\":{\"playerName\":24,\"freeformText\":240," +
                 "\"partySize\":4,\"chronicleEntries\":40}," +
                 "\"chapters\":[1,2,3]," +
                 "\"campaignStatuses\":[\"active\",\"victory\",\"defeat\"]," +
+                "\"combatantFields\":[\"id\",\"name\",\"hp\",\"maxHp\",\"essence\",\"maxEssence\",\"defense\",\"isEnemy\",\"defendingUntilTurn\"]," +
                 "\"turnResponseFields\":[\"session\",\"narration\",\"diceRolls\",\"resolvedActionType\"]}";
 
             ProtocolDescriptor descriptor =
                 JsonUtility.FromJson<ProtocolDescriptor>(json);
 
             Assert.AreEqual(
-                "dc-turn/2.0",
+                OnlineProtocol.Version,
                 descriptor.protocolVersion);
             Assert.AreEqual(
                 "game-session",
                 descriptor.sessionEntityType);
-            Assert.AreEqual(4, descriptor.actions.Length);
-            Assert.AreEqual(3, descriptor.chapters.Length);
-            Assert.AreEqual(
-                3,
-                descriptor.campaignStatuses.Length);
-            Assert.AreEqual(
-                240,
-                descriptor.limits.freeformText);
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "attack",
+                    "defend",
+                    "interact",
+                    "invoke",
+                    "speak"
+                },
+                descriptor.actions);
+            CollectionAssert.Contains(
+                descriptor.combatantFields,
+                "essence");
+            CollectionAssert.Contains(
+                descriptor.combatantFields,
+                "maxEssence");
             CollectionAssert.Contains(
                 descriptor.turnResponseFields,
                 "resolvedActionType");
+            Assert.AreEqual(
+                240,
+                descriptor.limits.freeformText);
         }
 
         [Test]
-        public void SessionEnvelope_ParsesCanonicalCampaignState()
+        public void SessionEnvelope_ParsesCanonicalCrowEssenceState()
         {
             const string json =
-                "{\"protocolVersion\":\"dc-turn/2.0\"," +
+                "{\"protocolVersion\":\"dc-turn/3.0\"," +
                 "\"session\":{" +
                 "\"code\":\"CROW42\"," +
                 "\"turnNumber\":9," +
@@ -74,6 +86,8 @@ namespace DungeonsCrows.Tests.Editor
                 "\"name\":\"Rook\"," +
                 "\"hp\":18," +
                 "\"maxHp\":20," +
+                "\"essence\":2," +
+                "\"maxEssence\":4," +
                 "\"defense\":10," +
                 "\"isEnemy\":false}]," +
                 "\"enemy\":{" +
@@ -81,6 +95,8 @@ namespace DungeonsCrows.Tests.Editor
                 "\"name\":\"Bone Rook\"," +
                 "\"hp\":10," +
                 "\"maxHp\":18," +
+                "\"essence\":0," +
+                "\"maxEssence\":0," +
                 "\"defense\":12," +
                 "\"isEnemy\":true}," +
                 "\"chapter\":2," +
@@ -108,39 +124,33 @@ namespace DungeonsCrows.Tests.Editor
                 2,
                 envelope.session.chapter);
             Assert.AreEqual(
-                "active",
-                envelope.session.campaignStatus);
+                2,
+                envelope.session.party[0].essence);
             Assert.AreEqual(
-                "Ember Feather",
-                envelope.session.relics[0]);
+                4,
+                envelope.session.party[0].maxEssence);
             Assert.AreEqual(
-                1,
-                envelope.session.ritualAttempts);
-            Assert.AreEqual(
-                250,
-                envelope.session.score);
-            Assert.AreEqual(
-                20,
-                envelope.session.party[0].maxHp);
+                0,
+                envelope.session.enemy.essence);
             Assert.AreEqual(
                 "Bone Rook",
                 envelope.session.enemy.name);
         }
 
         [Test]
-        public void TurnEnvelope_ParsesResolvedActionType()
+        public void TurnEnvelope_ParsesResolvedInvokeAction()
         {
             const string json =
-                "{\"protocolVersion\":\"dc-turn/2.0\"," +
-                "\"narration\":\"Steel cuts only air.\"," +
-                "\"diceRolls\":[3,14]," +
-                "\"resolvedActionType\":\"attack\"}";
+                "{\"protocolVersion\":\"dc-turn/3.0\"," +
+                "\"narration\":\"Blue crowfire tears through the crypt.\"," +
+                "\"diceRolls\":[14,7]," +
+                "\"resolvedActionType\":\"invoke\"}";
 
             TurnEnvelope envelope =
                 JsonUtility.FromJson<TurnEnvelope>(json);
 
             Assert.AreEqual(
-                "attack",
+                "invoke",
                 envelope.resolvedActionType);
             Assert.AreEqual(
                 2,
