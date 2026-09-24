@@ -11,6 +11,7 @@ namespace DungeonsCrows.Presentation
         public int chapter = 1;
         public GameObject root;
         public Animator animator;
+        public ProceduralActorMotion proceduralMotion;
         public Transform impactAnchor;
         public string expectedEnemyId;
     }
@@ -39,6 +40,7 @@ namespace DungeonsCrows.Presentation
             string expectedEnemyId,
             GameObject root,
             Animator animator = null,
+            ProceduralActorMotion proceduralMotion = null,
             Transform impactAnchor = null)
         {
             visuals.Add(new ChapterEnemyVisual
@@ -47,6 +49,7 @@ namespace DungeonsCrows.Presentation
                 expectedEnemyId = expectedEnemyId,
                 root = root,
                 animator = animator,
+                proceduralMotion = proceduralMotion,
                 impactAnchor = impactAnchor
             });
         }
@@ -66,6 +69,7 @@ namespace DungeonsCrows.Presentation
             if (!ReferenceEquals(next, _active))
             {
                 SetActive(next);
+                _active?.proceduralMotion?.ResetPose();
 
                 if (!immediate)
                     Trigger(_active?.animator, "Spawn");
@@ -88,10 +92,20 @@ namespace DungeonsCrows.Presentation
                 return;
 
             if (delta.Has(PresentationCue.EnemyDamaged))
-                Trigger(_active.animator, "Hit");
+            {
+                if (_active.animator != null)
+                    Trigger(_active.animator, "Hit");
+                else
+                    _active.proceduralMotion?.PlayHit();
+            }
 
             if (delta.Has(PresentationCue.EnemyDefeated))
-                Trigger(_active.animator, "Defeated");
+            {
+                if (_active.animator != null)
+                    Trigger(_active.animator, "Defeated");
+                else
+                    _active.proceduralMotion?.PlayDefeated();
+            }
         }
 
         private ChapterEnemyVisual FindFor(GameSessionDto session)
