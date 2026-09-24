@@ -115,7 +115,10 @@ namespace DungeonsCrows.EditorTools
                     boneRookMat,
                     blackRookMat,
                     out Transform initialEnemyImpact);
-            CreateCrowFlock(crowMat);
+            CrowFlockController crowFlock =
+                CreateCrowFlock(
+                    crowMat,
+                    player.transform);
 
             Camera camera = CreateCamera(player, head, out DualPerspectiveCamera cameraRig);
             Alpha4PostProcessingSetup.AttachToScene(camera);
@@ -221,6 +224,7 @@ namespace DungeonsCrows.EditorTools
                 chapterBridge,
                 enemyPresenter,
                 cameraFeedback,
+                crowFlock,
                 attackFx,
                 playerDamageFx,
                 guardFx,
@@ -535,26 +539,59 @@ namespace DungeonsCrows.EditorTools
                 Object.DestroyImmediate(collider);
         }
 
-        private static void CreateCrowFlock(Material crowMat)
+        private static CrowFlockController CreateCrowFlock(
+            Material crowMat,
+            Transform player)
         {
+            GameObject root =
+                new GameObject("Crow Flock");
+            CrowFlockController flock =
+                root.AddComponent<CrowFlockController>();
+            flock.SetTarget(player);
+
             for (int i = 0; i < 8; i++)
             {
-                float angle = i / 8f * Mathf.PI * 2f;
+                float angle =
+                    i / 8f *
+                    Mathf.PI *
+                    2f;
+
                 GameObject crow =
-                    GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                crow.name = "[PLACEHOLDER] CrowScout";
+                    GameObject.CreatePrimitive(
+                        PrimitiveType.Sphere);
+                crow.name =
+                    "[PLACEHOLDER] CrowScout " +
+                    (i + 1);
+                crow.transform.SetParent(
+                    root.transform,
+                    true);
                 crow.transform.localScale =
-                    new Vector3(0.45f, 0.22f, 0.7f);
-                crow.transform.position = new Vector3(
-                    Mathf.Cos(angle) * 4.5f,
-                    2.5f + (i % 2) * 0.4f,
-                    3.5f + Mathf.Sin(angle) * 4.5f);
-                crow.GetComponent<Renderer>().sharedMaterial = crowMat;
+                    new Vector3(
+                        0.45f,
+                        0.22f,
+                        0.7f);
+                crow.transform.position =
+                    player.position +
+                    new Vector3(
+                        Mathf.Cos(angle) * 4.5f,
+                        2.5f +
+                        (i % 2) * 0.4f,
+                        Mathf.Sin(angle) * 4.5f);
+                crow.GetComponent<Renderer>()
+                    .sharedMaterial = crowMat;
+
+                RemoveCollider(crow);
+
                 Mark(
                     crow,
                     PlaceholderCategory.Crow,
                     "Replace with rigged HD crow scout/familiar.");
+
+                flock.RegisterCrow(
+                    crow.transform);
             }
+
+            return flock;
         }
 
         private static RuntimeMinimapCamera CreateMinimap(
