@@ -78,6 +78,13 @@ def main() -> int:
         if 'campaignStatuses' not in ts or 'public string[] campaignStatuses;' not in cs:
             errors.append('Campaign status descriptor is not mirrored across web and Unity')
 
+        if "'resolvedActionType'" not in ts:
+            errors.append('Web protocol descriptor missing resolvedActionType turn field')
+        if 'resolvedActionType: action' not in ts_index:
+            errors.append('Web turn response does not return resolvedActionType')
+        if 'public string resolvedActionType;' not in cs:
+            errors.append('Unity TurnEnvelope does not parse resolvedActionType')
+
         if "'GET /api/protocol'" not in ts_index:
             errors.append('Web backend does not expose GET /api/protocol')
         if 'withProtocol(' not in ts_index:
