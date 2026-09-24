@@ -1,4 +1,3 @@
-using System;
 using DungeonsCrows.Online;
 using DungeonsCrows.World;
 using UnityEngine;
@@ -9,8 +8,10 @@ namespace DungeonsCrows.Presentation
     {
         [SerializeField] private OnlineCampaignController campaign;
         [SerializeField] private ChapterVisualStateBridge chapterVisuals;
+        [SerializeField] private ChapterEnemyPresenter enemyPresenter;
+        [SerializeField] private CombatCameraFeedback cameraFeedback;
         [SerializeField] private Animator playerAnimator;
-        [SerializeField] private Animator enemyAnimator;
+        [SerializeField] private Animator enemyAnimatorFallback;
 
         [Header("Resolved combat VFX")]
         [SerializeField] private ParticleSystem attackHitFx;
@@ -24,6 +25,8 @@ namespace DungeonsCrows.Presentation
         public void Configure(
             OnlineCampaignController campaignController,
             ChapterVisualStateBridge chapterBridge,
+            ChapterEnemyPresenter chapterEnemyPresenter,
+            CombatCameraFeedback combatCameraFeedback,
             ParticleSystem attackHit,
             ParticleSystem playerDamage,
             ParticleSystem guard,
@@ -34,6 +37,8 @@ namespace DungeonsCrows.Presentation
         {
             campaign = campaignController;
             chapterVisuals = chapterBridge;
+            enemyPresenter = chapterEnemyPresenter;
+            cameraFeedback = combatCameraFeedback;
             attackHitFx = attackHit;
             playerDamageFx = playerDamage;
             guardFx = guard;
@@ -41,6 +46,14 @@ namespace DungeonsCrows.Presentation
             ritualFx = ritual;
             victoryFx = victory;
             defeatFx = defeat;
+        }
+
+        public void SetAnimators(
+            Animator player,
+            Animator enemyFallback = null)
+        {
+            playerAnimator = player;
+            enemyAnimatorFallback = enemyFallback;
         }
 
         private void OnEnable()
@@ -59,75 +72,82 @@ namespace DungeonsCrows.Presentation
 
         private void OnSessionChanged(GameSessionDto session)
         {
-            if (session == null) return;
-            if (chapterVisuals != null)
-                chapterVisuals.ApplyCanonicalSession(session);
+            if (session == null)
+            {
+                enemyPresenter?.ApplyCanonicalSession(null);
+                return;
+            }
+
+            chapterVisuals?.ApplyCanonicalSession(session);
+            enemyPresenter?.ApplyCanonicalSession(session);
         }
 
-        private void OnTurnResolved(GameSessionDto before, TurnEnvelope envelope)
+        private void OnTurnResolved(
+            GameSessionDto before,
+            TurnEnvelope envelope)
         {
             GameSessionDto after = envelope?.session;
-            if (before == null || after == null) return;
+            if (before == null || after == null || campaign == null)
+                return;
 
-            CombatantDto beforePlayer = FindPlayer(before, campaign.PlayerId);
-            CombatantDto afterPlayer = FindPlayer(after, campaign.PlayerId);
+            CanonicalPresentationDelta delta =
+                CanonicalPresentationDelta.From(
+                    before,
+                    after,
+                    campaign.PlayerId);
 
-            if (before.enemy != null && after.enemy != null &&
-                after.enemy.hp < before.enemy.hp)
+            enemyPresenter?.PresentDelta(delta, after);
+            cameraFeedback?.Present(delta);
+
+            if (delta.Has(PresentationCue.EnemyDamaged))
             {
+                MoveToEnemy(attackHitFx);
                 Play(attackHitFx);
-                Trigger(enemyAnimator, "Hit");
+                Trigger(
+                    enemyPresenter?.ActiveVisual?.animator ??
+                    enemyAnimatorFallback,
+                    "Hit");
                 Trigger(playerAnimator, "AttackResolved");
             }
 
-            if (beforePlayer != null && afterPlayer != null)
+            if (delta.Has(PresentationCue.PlayerDamaged))
             {
-                if (afterPlayer.hp < beforePlayer.hp)
-                {
-                    Play(playerDamageFx);
-                    Trigger(playerAnimator, "Hit");
-                }
-
-                if (afterPlayer.hp > beforePlayer.hp)
-                {
-                    Play(healFx);
-                    Play(guardFx);
-                    Trigger(playerAnimator, "Guard");
-                }
+                Play(playerDamageFx);
+                Trigger(playerAnimator, "Hit");
             }
 
-            bool ritualAdvanced =
-                (!before.altarOpened && after.altarOpened) ||
-                (!before.rookeryPurified && after.rookeryPurified) ||
-                (!before.crownBroken && after.crownBroken) ||
-                after.ritualAttempts > before.ritualAttempts;
+            if (delta.Has(PresentationCue.PlayerGuarded))
+            {
+                Play(guardFx);
+                Trigger(playerAnimator, "Guard");
+            }
 
-            if (ritualAdvanced)
+            if (delta.Has(PresentationCue.PlayerHealed))
+                Play(healFx);
+
+            if (delta.Has(PresentationCue.RitualAdvanced))
                 Play(ritualFx);
 
-            if (before.chapter != after.chapter && chapterVisuals != null)
-                chapterVisuals.ApplyCanonicalSession(after);
+            if (delta.Has(PresentationCue.ChapterAdvanced))
+                chapterVisuals?.ApplyCanonicalSession(after);
 
-            if (!string.Equals(before.campaignStatus, after.campaignStatus, StringComparison.Ordinal))
-            {
-                if (string.Equals(after.campaignStatus, "victory", StringComparison.Ordinal))
-                    Play(victoryFx);
-                else if (string.Equals(after.campaignStatus, "defeat", StringComparison.Ordinal))
-                    Play(defeatFx);
-            }
+            if (delta.Has(PresentationCue.Victory))
+                Play(victoryFx);
+
+            if (delta.Has(PresentationCue.Defeat))
+                Play(defeatFx);
         }
 
-        private static CombatantDto FindPlayer(GameSessionDto session, string playerId)
+        private void MoveToEnemy(ParticleSystem particleSystem)
         {
-            if (session?.party == null || string.IsNullOrEmpty(playerId)) return null;
-            foreach (CombatantDto combatant in session.party)
+            if (particleSystem == null ||
+                enemyPresenter?.ActiveImpactAnchor == null)
             {
-                if (combatant != null &&
-                    string.Equals(combatant.id, playerId, StringComparison.Ordinal))
-                    return combatant;
+                return;
             }
 
-            return null;
+            particleSystem.transform.position =
+                enemyPresenter.ActiveImpactAnchor.position;
         }
 
         private static void Play(ParticleSystem particleSystem)
@@ -136,10 +156,15 @@ namespace DungeonsCrows.Presentation
                 particleSystem.Play(true);
         }
 
-        private static void Trigger(Animator animator, string trigger)
+        private static void Trigger(
+            Animator animator,
+            string trigger)
         {
-            if (animator != null && animator.isActiveAndEnabled)
+            if (animator != null &&
+                animator.isActiveAndEnabled)
+            {
                 animator.SetTrigger(trigger);
+            }
         }
     }
 }
