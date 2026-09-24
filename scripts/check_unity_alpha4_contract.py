@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import json
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+UNITY = ROOT / "UnityProject"
+
+errors = []
+
+def require(condition: bool, message: str) -> None:
+    if not condition:
+        errors.append(message)
+
+def text(path: str) -> str:
+    target = ROOT / path
+    require(target.exists(), f"Missing required file: {path}")
+    if not target.exists():
+        return ""
+    return target.read_text(encoding="utf-8")
+
+project_version = text("UnityProject/ProjectSettings/ProjectVersion.txt")
+require(
+    "m_EditorVersion: 6000.0.65f1" in project_version,
+    "Unity editor baseline drifted from 6000.0.65f1",
+)
+
+manifest_text = text("UnityProject/Packages/manifest.json")
+try:
+    manifest = json.loads(manifest_text)
+    deps = manifest.get("dependencies", {})
+except Exception as exc:
+    deps = {}
+    errors.append(f"Invalid Unity package manifest JSON: {exc}")
+
+expected_packages = {
+    "com.unity.render-pipelines.universal": "17.0.4",
+    "com.unity.test-framework": "1.4.6",
+    "com.unity.inputsystem": "1.17.0",
+    "com.unity.netcode.gameobjects": "2.7.0",
+}
+for package, version in expected_packages.items():
+    require(
+        deps.get(package) == version,
+        f"Package mismatch {package}: expected {version}, got {deps.get(package)!r}",
+    )
+
+runtime_asm = text(
+    "UnityProject/Assets/Crows/Scripts/DungeonsCrows.Runtime.asmdef"
+)
+editor_asm = text(
+    "UnityProject/Assets/Crows/Editor/DungeonsCrows.Editor.asmdef"
+)
+tests_asm = text(
+    "UnityProject/Assets/Crows/Tests/Editor/DungeonsCrows.Tests.Editor.asmdef"
+)
+
+try:
+    runtime_refs = set(json.loads(runtime_asm).get("references", []))
+    editor_refs = set(json.loads(editor_asm).get("references", []))
+    tests_json = json.loads(tests_asm)
+    tests_refs = set(tests_json.get("references", []))
+    tests_optional = set(tests_json.get("optionalUnityReferences", []))
+except Exception as exc:
+    runtime_refs = editor_refs = tests_refs = tests_optional = set()
+    errors.append(f"Invalid Unity asmdef JSON: {exc}")
+
+require("Unity.InputSystem" in runtime_refs, "Runtime asmdef missing Unity.InputSystem")
+require("Unity.Netcode.Runtime" in runtime_refs, "Runtime asmdef missing Unity.Netcode.Runtime")
+require("DungeonsCrows.Runtime" in editor_refs, "Editor asmdef missing runtime reference")
+require(
+    "Unity.RenderPipelines.Universal.Runtime" in editor_refs,
+    "Editor asmdef missing URP runtime reference",
+)
+require("DungeonsCrows.Runtime" in tests_refs, "Tests asmdef missing runtime reference")
+require("TestAssemblies" in tests_optional, "Tests asmdef is not marked as a test assembly")
+
+protocol = text("UnityProject/Assets/Crows/Scripts/Online/OnlineProtocol.cs")
+require('Version = "dc-turn/2.0"' in protocol, "Unity protocol is not dc-turn/2.0")
+
+hud = text("UnityProject/Assets/Crows/Scripts/UI/Alpha4HudController.cs")
+for token in ("digit1Key", "digit2Key", "digit3Key", "digit4Key"):
+    require(token in hud, f"Alpha 4 HUD missing functional hotkey: {token}")
+require("campaign?.LeaveHunt()" in hud, "Alpha 4 HUD missing functional Leave Hunt")
+
+campaign = text(
+    "UnityProject/Assets/Crows/Scripts/Online/OnlineCampaignController.cs"
+)
+require(
+    "LocalHuntIdentityStore.Save" in campaign
+    and "LocalHuntIdentityStore.TryLoad" in campaign,
+    "Unity Hunt resume persistence is incomplete",
+)
+require(
+    "SilentPartyRefreshRoutine" in campaign,
+    "Unity waiting-party synchronization fallback is missing",
+)
+
+render_setup = text(
+    "UnityProject/Assets/Crows/Editor/Alpha4RenderPipelineSetup.cs"
+)
+for token in (
+    "UniversalRenderPipelineAsset.Create",
+    "GraphicsSettings.defaultRenderPipeline",
+    "QualitySettings.renderPipeline",
+    "asset.renderScale = 1f",
+    "asset.msaaSampleCount = 4",
+):
+    require(token in render_setup, f"Alpha 4 URP setup missing: {token}")
+
+builder = text(
+    "UnityProject/Assets/Crows/Editor/GothicPrototypeSceneBuilder.cs"
+)
+require(
+    "Alpha4RenderPipelineSetup.EnsureConfigured()" in builder,
+    "Scene builder does not configure URP before creating the scene",
+)
+require(
+    "Alpha4QualityDirector" in builder,
+    "Scene builder does not wire the quality director",
+)
+
+tests = text(
+    "UnityProject/Assets/Crows/Tests/Editor/Alpha4PresentationTests.cs"
+)
+for test_name in (
+    "DualPerspectiveCamera_SwitchesFirstAndThirdPerson",
+    "MorphicEnvironment_SnapAppliesChapterPoseExactly",
+    "LocalHuntIdentityStore_RoundTripsAndClears",
+    "QualityProfiles_ScaleDownWithoutChangingGameRules",
+):
+    require(test_name in tests, f"Missing Alpha 4 regression test: {test_name}")
+
+if errors:
+    print("Dungeons & Crows Alpha 4 static contract FAILED:")
+    for error in errors:
+        print(f" - {error}")
+    sys.exit(1)
+
+print("Dungeons & Crows Alpha 4 static contract OK")
+print(" unity=6000.0.65f1")
+print(" urp=17.0.4")
+print(" protocol=dc-turn/2.0")
+print(" input=real hotkeys")
+print(" persistence=resume/leave")
+print(" multiplayer=waiting-party refresh fallback")
