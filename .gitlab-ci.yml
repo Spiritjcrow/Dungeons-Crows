@@ -1,0 +1,28 @@
+stages:
+  - verify
+
+variables:
+  UNITY_VERSION: "6000.0.65f1"
+  UNITY_DIR: "$CI_PROJECT_DIR/UnityProject"
+  GIT_DEPTH: "1"
+
+unity-editmode-budget:
+  stage: verify
+  image: "unityci/editor:${UNITY_VERSION}-base-3"
+  when: manual
+  allow_failure: false
+  timeout: 45m
+  cache:
+    key: "unity-${UNITY_VERSION}-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - UnityProject/Library/
+  before_script:
+    - chmod +x ci/gitlab-unity-verify.sh
+  script:
+    - ci/gitlab-unity-verify.sh
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - UnityProject/TestResults/
+      - UnityProject/Logs/

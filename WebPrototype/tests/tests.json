@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Create, play, refresh, and resume the same Hunt",
+    "sanity": true,
+    "viewport": "desktop",
+    "covers": ["session creation", "deterministic turn resolution", "AI Dungeon Master narration", "persistent shared chronicle", "campaign score", "Crow Essence", "local player identity persistence", "resume after refresh"],
+    "description": "Verifies the critical play loop survives a real browser refresh without losing player identity, Essence, or authoritative Hunt state.",
+    "steps": ["Enter adventurer name Rook and create a Hunt", "Confirm Resolve 20/20 and Crow Essence 4/4 are present", "Choose Attack and note the six-character session code", "Refresh the page", "Choose another legal action"],
+    "expected": "The same Hunt code, player identity, current turn, HP, Crow Essence, score, and chronicle resume automatically without joining as a duplicate."
+  },
+  {
+    "name": "Invoke spends real Crow Essence and Defend restores it",
+    "viewport": "desktop",
+    "covers": ["Crow Essence resource", "Invoke action", "deterministic crowfire", "Defend essence recovery", "enemy retaliation", "resource validation"],
+    "description": "Verifies the blue resource is authoritative game state rather than decorative HUD.",
+    "steps": ["Create a Hunt as Rook and confirm Essence 4/4", "Use Invoke on a legal turn", "Confirm Essence becomes 2/4 and the chronicle records the deterministic crowfire result", "Use Invoke again on a legal turn so Essence reaches 0/4", "Attempt Invoke at 0/4", "Use Defend"],
+    "expected": "Each accepted Invoke spends exactly 2 Essence, insufficient Essence blocks Invoke without mutation, and Defend restores exactly 1 Essence up to the maximum while retaining its Resolve/guard behavior."
+  },
+  {
+    "name": "Second adventurer joins and receives realtime campaign updates",
+    "viewport": "desktop",
+    "covers": ["session joining", "session initial load", "realtime subscription", "cross-client entity update", "shared campaign state", "Crow Essence sync"],
+    "description": "Verifies two browsers share one canonical Hunt and accepted turns propagate without refresh.",
+    "setup": ["Actor A creates a Hunt as Rook and keeps the six-character session code"],
+    "steps": ["Actor B joins as Ash using Actor A's session code", "Confirm both clients show the green realtime session indicator", "Actor A performs the currently legal action while Actor B does not refresh"],
+    "expected": "Actor B automatically sees the updated turn, HP, Crow Essence, objective state, score, and Shared Chronicle entry."
+  },
+  {
+    "name": "Complete Chapter I and descend to the Bone Rookery",
+    "viewport": "desktop",
+    "covers": ["chapter objective", "relic acquisition", "enemy defeat", "chapter transition", "between-chapter healing", "essence refill", "defend recovery"],
+    "description": "Verifies Chapter I transitions only after its real objective and enemy are resolved.",
+    "steps": ["Create a Hunt as Vale", "Choose Awaken Altar and confirm Ember Feather appears", "Use Attack, Invoke, and Defend strategically until the Crowbound Warden reaches 0 HP"],
+    "expected": "Chapter 2 The Bone Rookery becomes visible, the enemy changes to Bone Rook, the relic remains stored, and living party members begin the new chapter fully restored in Resolve and Crow Essence."
+  },
+  {
+    "name": "Finish the full campaign and return to the gate",
+    "viewport": "desktop",
+    "covers": ["three chapter progression", "objective skill checks", "three-attempt rite guarantee", "Crow Essence", "relic persistence", "boss encounter", "victory state", "mutation lock after victory", "working return-to-gate control"],
+    "description": "Verifies the campaign has a real deterministic finish and a functioning exit path.",
+    "steps": ["Complete Chapter I", "In Chapter II complete the rite then defeat the Bone Rook using legal Attack, Invoke and Defend turns", "In Chapter III break the crown then defeat the Black Rook", "Choose Return to Gate"],
+    "expected": "The victory banner appears with final score and three relics, no further turns mutate the finished Hunt, and Return to Gate clears only local Hunt identity."
+  },
+  {
+    "name": "Party defeat ends the Hunt on mobile",
+    "viewport": "mobile",
+    "covers": ["mobile gameplay", "enemy retaliation", "fallen state", "defeat state", "mutation lock after defeat", "speak action", "working leave-hunt control"],
+    "description": "Verifies defeat remains a real terminal state and the player can leave cleanly.",
+    "steps": ["Create a Hunt as Ash on mobile", "Use Speak repeatedly on legal turns so the enemy retaliates while taking no attack damage", "Continue until the adventurer reaches 0 HP", "Choose Return to Gate"],
+    "expected": "A defeat banner appears, the adventurer is marked FALLEN, all turn actions are disabled, and Return to Gate clears local identity and returns to the create/join screen."
+  }
+]

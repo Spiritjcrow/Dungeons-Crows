@@ -1,0 +1,99 @@
+name: Unity 6 Editor Validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'UnityProject/**'
+      - '.github/workflows/unity-editor-validation.yml'
+
+permissions:
+  contents: read
+  checks: write
+
+concurrency:
+  group: unity-editor-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unity-license-preflight:
+    name: Unity license preflight
+    runs-on: ubuntu-slim
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - name: Detect Unity CI activation
+        id: check
+        shell: bash
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        run: |
+          if [[ -n "${UNITY_LICENSE:-}" || ( -n "${UNITY_EMAIL:-}" && -n "${UNITY_PASSWORD:-}" ) ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Unity activation inputs are available."
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Unity Editor validation skipped because no Unity activation is configured yet."
+          fi
+
+  unity-editmode:
+    name: Unity 6 EditMode
+    needs: unity-license-preflight
+    if: needs.unity-license-preflight.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Show requested Unity version
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat UnityProject/ProjectSettings/ProjectVersion.txt
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path('UnityProject/Packages/manifest.json').read_text())
+          print('Unity package manifest:')
+          for name, version in sorted(manifest['dependencies'].items()):
+              print(f'  {name}: {version}')
+          PY
+
+      - name: Restore Unity Library cache
+        uses: actions/cache@v4
+        with:
+          path: UnityProject/Library
+          key: unity-library-${{ runner.os }}-${{ hashFiles('UnityProject/Packages/**', 'UnityProject/ProjectSettings/**', 'UnityProject/Assets/**') }}
+          restore-keys: |
+            unity-library-${{ runner.os }}-
+
+      - name: Run Unity EditMode tests
+        id: unity-tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: UnityProject
+          unityVersion: auto
+          testMode: editmode
+          artifactsPath: unity-test-artifacts
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Dungeons & Crows Unity EditMode
+
+      - name: Upload Unity test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-editmode-results
+          path: ${{ steps.unity-tests.outputs.artifactsPath }}
+          if-no-files-found: warn

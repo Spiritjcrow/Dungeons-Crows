@@ -1,0 +1,38 @@
+name: Protocol Contract
+
+on:
+  pull_request:
+    paths:
+      - 'WebPrototype/backend/**'
+      - 'UnityProject/Packages/**'
+      - 'UnityProject/ProjectSettings/ProjectVersion.txt'
+      - 'UnityProject/Assets/Crows/Scripts/**'
+      - 'UnityProject/Assets/Crows/Editor/**'
+      - 'UnityProject/Assets/Crows/Tests/**'
+      - 'scripts/check_protocol_contract.py'
+      - 'scripts/check_unity_alpha4_contract.py'
+      - '.github/workflows/protocol-contract.yml'
+  push:
+    branches:
+      - 'selma/**'
+    paths:
+      - 'WebPrototype/backend/**'
+      - 'UnityProject/Packages/**'
+      - 'UnityProject/ProjectSettings/ProjectVersion.txt'
+      - 'UnityProject/Assets/Crows/Scripts/**'
+      - 'UnityProject/Assets/Crows/Editor/**'
+      - 'UnityProject/Assets/Crows/Tests/**'
+      - 'scripts/check_protocol_contract.py'
+      - 'scripts/check_unity_alpha4_contract.py'
+      - '.github/workflows/protocol-contract.yml'
+
+jobs:
+  protocol-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Verify web and Unity protocol match
+        run: python3 scripts/check_protocol_contract.py
+      - name: Verify Alpha 4 Unity static contract
+        run: python3 scripts/check_unity_alpha4_contract.py
