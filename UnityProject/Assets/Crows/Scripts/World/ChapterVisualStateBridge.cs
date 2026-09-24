@@ -3,15 +3,16 @@ using UnityEngine;
 
 namespace DungeonsCrows.World
 {
-    /// <summary>
-    /// Visual-only adapter from canonical online campaign state to the scene.
-    /// It never changes authoritative game data.
-    /// </summary>
     public sealed class ChapterVisualStateBridge : MonoBehaviour
     {
         [SerializeField] private MorphicEnvironmentController environment;
 
         private int _lastChapter;
+
+        public void SetEnvironment(MorphicEnvironmentController controller)
+        {
+            environment = controller;
+        }
 
         public void ApplyCanonicalSession(GameSessionDto session, bool immediate = false)
         {
