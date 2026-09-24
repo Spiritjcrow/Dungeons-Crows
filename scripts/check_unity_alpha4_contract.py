@@ -90,6 +90,10 @@ require(
     "_narrationLabel" in hud and "session.lastNarration" in hud,
     "Alpha 4 HUD is not rendering canonical Dungeon Master narration",
 )
+require(
+    "_minimapImage" in hud and "minimap.Texture" in hud,
+    "Alpha 4 HUD is not rendering a real minimap texture",
+)
 
 presentation = text(
     "UnityProject/Assets/Crows/Scripts/Presentation/CanonicalCombatPresentationBridge.cs"
@@ -190,6 +194,11 @@ require(
     and "ProceduralActorMotion" in builder,
     "Scene builder does not wire chapter enemies and motion fallback",
 )
+require(
+    "CreateMinimap" in builder
+    and "hud.SetMinimap(minimap)" in builder,
+    "Scene builder does not wire the real minimap",
+)
 
 landscape = text(
     "UnityProject/Assets/Crows/Scripts/World/MorphicLandscapeController.cs"
@@ -226,6 +235,7 @@ for test_name in (
     "LocalHuntIdentityStore_RoundTripsAndClears",
     "QualityProfiles_ScaleDownWithoutChangingGameRules",
     "MorphicLandscape_SnapChangesWalkableGeometry",
+    "RuntimeMinimapCamera_CreatesRealRenderTexture",
     "CanonicalPresentationDelta_DerivesOnlyCommittedChanges",
     "ChapterEnemyPresenter_SelectsCanonicalChapterEnemy",
 ):
