@@ -99,15 +99,22 @@ namespace DungeonsCrows.Presentation
             enemyPresenter?.PresentDelta(delta, after);
             cameraFeedback?.Present(delta);
 
+            PresentResolvedPlayerAction(
+                envelope.resolvedActionType);
+
             if (delta.Has(PresentationCue.EnemyDamaged))
             {
                 MoveToEnemy(attackHitFx);
                 Play(attackHitFx);
-                Trigger(
-                    enemyPresenter?.ActiveVisual?.animator ??
-                    enemyAnimatorFallback,
-                    "Hit");
-                Trigger(playerAnimator, "AttackResolved");
+
+                if (enemyPresenter == null)
+                    Trigger(enemyAnimatorFallback, "Hit");
+            }
+
+            if (delta.Has(PresentationCue.EnemyDefeated) &&
+                enemyPresenter == null)
+            {
+                Trigger(enemyAnimatorFallback, "Defeated");
             }
 
             if (delta.Has(PresentationCue.PlayerDamaged))
@@ -117,10 +124,7 @@ namespace DungeonsCrows.Presentation
             }
 
             if (delta.Has(PresentationCue.PlayerGuarded))
-            {
                 Play(guardFx);
-                Trigger(playerAnimator, "Guard");
-            }
 
             if (delta.Has(PresentationCue.PlayerHealed))
                 Play(healFx);
@@ -136,6 +140,29 @@ namespace DungeonsCrows.Presentation
 
             if (delta.Has(PresentationCue.Defeat))
                 Play(defeatFx);
+        }
+
+        private void PresentResolvedPlayerAction(
+            string resolvedActionType)
+        {
+            if (string.IsNullOrWhiteSpace(resolvedActionType))
+                return;
+
+            switch (resolvedActionType)
+            {
+                case "attack":
+                    Trigger(playerAnimator, "AttackResolved");
+                    break;
+                case "defend":
+                    Trigger(playerAnimator, "Guard");
+                    break;
+                case "interact":
+                    Trigger(playerAnimator, "Rite");
+                    break;
+                case "speak":
+                    Trigger(playerAnimator, "Speak");
+                    break;
+            }
         }
 
         private void MoveToEnemy(ParticleSystem particleSystem)
