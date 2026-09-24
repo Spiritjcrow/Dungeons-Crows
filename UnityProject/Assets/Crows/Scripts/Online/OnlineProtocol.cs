@@ -117,6 +117,7 @@ namespace DungeonsCrows.Online
         public GameSessionDto session;
         public string narration;
         public int[] diceRolls;
+        public string resolvedActionType;
     }
 
     [Serializable]
