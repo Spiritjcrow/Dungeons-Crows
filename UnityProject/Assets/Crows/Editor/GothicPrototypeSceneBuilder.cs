@@ -119,6 +119,8 @@ namespace DungeonsCrows.EditorTools
 
             Camera camera = CreateCamera(player, head, out DualPerspectiveCamera cameraRig);
             Alpha4PostProcessingSetup.AttachToScene(camera);
+            RuntimeMinimapCamera minimap =
+                CreateMinimap(player.transform);
 
             CombatCameraFeedback cameraFeedback =
                 camera.gameObject.AddComponent<CombatCameraFeedback>();
@@ -230,7 +232,7 @@ namespace DungeonsCrows.EditorTools
                 null,
                 playerMotion);
 
-            CreateHud(campaign);
+            CreateHud(campaign, minimap);
 
             string scenePath = SceneFolder + "/GothicPrototype.unity";
             EditorSceneManager.SaveScene(scene, scenePath);
@@ -555,6 +557,26 @@ namespace DungeonsCrows.EditorTools
             }
         }
 
+        private static RuntimeMinimapCamera CreateMinimap(
+            Transform player)
+        {
+            GameObject minimapObject =
+                new GameObject("Minimap Camera");
+            Camera minimapCamera =
+                minimapObject.AddComponent<Camera>();
+            minimapCamera.depth = -10f;
+
+            RuntimeMinimapCamera minimap =
+                minimapObject.AddComponent<RuntimeMinimapCamera>();
+            minimap.Configure(
+                player,
+                22f,
+                11f,
+                256);
+
+            return minimap;
+        }
+
         private static Camera CreateCamera(
             GameObject player,
             GameObject head,
@@ -666,7 +688,8 @@ namespace DungeonsCrows.EditorTools
         }
 
         private static void CreateHud(
-            OnlineCampaignController campaign)
+            OnlineCampaignController campaign,
+            RuntimeMinimapCamera minimap)
         {
             GameObject hudObject = new GameObject("Alpha 4 HUD");
             UIDocument document = hudObject.AddComponent<UIDocument>();
@@ -675,6 +698,7 @@ namespace DungeonsCrows.EditorTools
             Alpha4HudController hud =
                 hudObject.AddComponent<Alpha4HudController>();
             hud.SetCampaign(campaign);
+            hud.SetMinimap(minimap);
         }
 
         private static PanelSettings GetOrCreatePanelSettings()
