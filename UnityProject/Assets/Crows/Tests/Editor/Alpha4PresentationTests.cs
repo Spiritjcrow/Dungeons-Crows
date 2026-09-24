@@ -1,5 +1,6 @@
 using DungeonsCrows.CameraSystem;
 using DungeonsCrows.Online;
+using DungeonsCrows.Presentation;
 using DungeonsCrows.Rendering;
 using DungeonsCrows.World;
 using NUnit.Framework;
@@ -165,6 +166,158 @@ namespace DungeonsCrows.Tests.Editor
             {
                 LocalHuntIdentityStore.Clear();
             }
+        }
+
+        [Test]
+        public void CanonicalPresentationDelta_DerivesOnlyCommittedChanges()
+        {
+            var before = new GameSessionDto
+            {
+                chapter = 2,
+                campaignStatus = "active",
+                ritualAttempts = 0,
+                party = new[]
+                {
+                    new CombatantDto
+                    {
+                        id = "p1",
+                        hp = 12,
+                        maxHp = 20,
+                        defendingUntilTurn = 0
+                    }
+                },
+                enemy = new CombatantDto
+                {
+                    id = "bone-rook",
+                    hp = 18,
+                    maxHp = 18
+                }
+            };
+
+            var after = new GameSessionDto
+            {
+                chapter = 2,
+                campaignStatus = "active",
+                ritualAttempts = 1,
+                party = new[]
+                {
+                    new CombatantDto
+                    {
+                        id = "p1",
+                        hp = 14,
+                        maxHp = 20,
+                        defendingUntilTurn = 7
+                    }
+                },
+                enemy = new CombatantDto
+                {
+                    id = "bone-rook",
+                    hp = 14,
+                    maxHp = 18
+                }
+            };
+
+            CanonicalPresentationDelta delta =
+                CanonicalPresentationDelta.From(
+                    before,
+                    after,
+                    "p1");
+
+            Assert.IsTrue(
+                delta.Has(PresentationCue.EnemyDamaged));
+            Assert.IsTrue(
+                delta.Has(PresentationCue.PlayerHealed));
+            Assert.IsTrue(
+                delta.Has(PresentationCue.PlayerGuarded));
+            Assert.IsTrue(
+                delta.Has(PresentationCue.RitualAdvanced));
+            Assert.AreEqual(4, delta.EnemyDamage);
+            Assert.AreEqual(2, delta.PlayerHealing);
+        }
+
+        [Test]
+        public void ChapterEnemyPresenter_SelectsCanonicalChapterEnemy()
+        {
+            GameObject presenterObject =
+                new GameObject("Enemy Presenter");
+            GameObject warden =
+                new GameObject("Warden");
+            GameObject boneRook =
+                new GameObject("Bone Rook");
+            GameObject blackRook =
+                new GameObject("Black Rook");
+
+            try
+            {
+                ChapterEnemyPresenter presenter =
+                    presenterObject.AddComponent<ChapterEnemyPresenter>();
+
+                presenter.Register(
+                    1,
+                    "warden",
+                    warden);
+                presenter.Register(
+                    2,
+                    "bone-rook",
+                    boneRook);
+                presenter.Register(
+                    3,
+                    "black-rook",
+                    blackRook);
+
+                presenter.ApplyCanonicalSession(
+                    new GameSessionDto
+                    {
+                        chapter = 2,
+                        campaignStatus = "active",
+                        enemy = new CombatantDto
+                        {
+                            id = "bone-rook",
+                            hp = 18,
+                            maxHp = 18
+                        }
+                    },
+                    true);
+
+                Assert.IsFalse(warden.activeSelf);
+                Assert.IsTrue(boneRook.activeSelf);
+                Assert.IsFalse(blackRook.activeSelf);
+                Assert.AreSame(
+                    boneRook,
+                    presenter.ActiveVisual.root);
+            }
+            finally
+            {
+                Object.DestroyImmediate(warden);
+                Object.DestroyImmediate(boneRook);
+                Object.DestroyImmediate(blackRook);
+                Object.DestroyImmediate(presenterObject);
+            }
+        }
+
+        [Test]
+        public void DualPerspectiveCamera_PresentationOffsetRoundTrips()
+        {
+            GameObject cameraObject =
+                new GameObject("Presentation Camera");
+            cameraObject.AddComponent<Camera>();
+            DualPerspectiveCamera rig =
+                cameraObject.AddComponent<DualPerspectiveCamera>();
+
+            Vector3 offset =
+                new Vector3(0.05f, -0.03f, 0f);
+
+            rig.SetPresentationOffset(offset);
+            Assert.AreEqual(
+                offset,
+                rig.PresentationOffset);
+
+            rig.ClearPresentationOffset();
+            Assert.AreEqual(
+                Vector3.zero,
+                rig.PresentationOffset);
+
+            Object.DestroyImmediate(cameraObject);
         }
 
         [Test]
