@@ -3,6 +3,7 @@ using DungeonsCrows.CameraSystem;
 using DungeonsCrows.Online;
 using DungeonsCrows.Player;
 using DungeonsCrows.Presentation;
+using DungeonsCrows.Rendering;
 using DungeonsCrows.UI;
 using DungeonsCrows.World;
 using UnityEditor;
@@ -95,6 +96,13 @@ namespace DungeonsCrows.EditorTools
             ExplorationMotor motor = player.AddComponent<ExplorationMotor>();
             motor.SetViewReference(camera.transform);
             motor.SetPerspectiveCamera(cameraRig);
+
+            GameObject qualityRoot = new GameObject("Alpha 4 Quality Director");
+            Alpha4QualityDirector qualityDirector =
+                qualityRoot.AddComponent<Alpha4QualityDirector>();
+            qualityDirector.Configure(
+                camera,
+                VisualQualityTier.Balanced);
 
             Light moonLight = CreateMoonLight();
 
