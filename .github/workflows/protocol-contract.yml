@@ -4,22 +4,26 @@ on:
   pull_request:
     paths:
       - 'WebPrototype/backend/**'
-      - 'UnityProject/Assets/Crows/Scripts/Online/**'
-      - 'scripts/check_protocol_contract.py'
-      - 'scripts/check_unity_alpha4_contract.py'
       - 'UnityProject/Packages/**'
       - 'UnityProject/ProjectSettings/ProjectVersion.txt'
       - 'UnityProject/Assets/Crows/Scripts/**'
       - 'UnityProject/Assets/Crows/Editor/**'
       - 'UnityProject/Assets/Crows/Tests/**'
+      - 'scripts/check_protocol_contract.py'
+      - 'scripts/check_unity_alpha4_contract.py'
       - '.github/workflows/protocol-contract.yml'
   push:
     branches:
       - 'selma/**'
     paths:
       - 'WebPrototype/backend/**'
-      - 'UnityProject/Assets/Crows/Scripts/Online/**'
+      - 'UnityProject/Packages/**'
+      - 'UnityProject/ProjectSettings/ProjectVersion.txt'
+      - 'UnityProject/Assets/Crows/Scripts/**'
+      - 'UnityProject/Assets/Crows/Editor/**'
+      - 'UnityProject/Assets/Crows/Tests/**'
       - 'scripts/check_protocol_contract.py'
+      - 'scripts/check_unity_alpha4_contract.py'
       - '.github/workflows/protocol-contract.yml'
 
 jobs:
