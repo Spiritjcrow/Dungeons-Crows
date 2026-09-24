@@ -11,6 +11,7 @@ namespace DungeonsCrows.Presentation
         [SerializeField] private ChapterEnemyPresenter enemyPresenter;
         [SerializeField] private CombatCameraFeedback cameraFeedback;
         [SerializeField] private Animator playerAnimator;
+        [SerializeField] private ProceduralActorMotion playerProceduralMotion;
         [SerializeField] private Animator enemyAnimatorFallback;
 
         [Header("Resolved combat VFX")]
@@ -48,11 +49,17 @@ namespace DungeonsCrows.Presentation
             defeatFx = defeat;
         }
 
-        public void SetAnimators(
+        public void SetPlayerPresentation(
             Animator player,
-            Animator enemyFallback = null)
+            ProceduralActorMotion proceduralMotion)
         {
             playerAnimator = player;
+            playerProceduralMotion = proceduralMotion;
+        }
+
+        public void SetEnemyAnimatorFallback(
+            Animator enemyFallback)
+        {
             enemyAnimatorFallback = enemyFallback;
         }
 
@@ -75,6 +82,7 @@ namespace DungeonsCrows.Presentation
             if (session == null)
             {
                 enemyPresenter?.ApplyCanonicalSession(null);
+                playerProceduralMotion?.ResetPose();
                 return;
             }
 
@@ -120,7 +128,11 @@ namespace DungeonsCrows.Presentation
             if (delta.Has(PresentationCue.PlayerDamaged))
             {
                 Play(playerDamageFx);
-                Trigger(playerAnimator, "Hit");
+
+                if (playerAnimator != null)
+                    Trigger(playerAnimator, "Hit");
+                else
+                    playerProceduralMotion?.PlayHit();
             }
 
             if (delta.Has(PresentationCue.PlayerGuarded))
@@ -136,10 +148,24 @@ namespace DungeonsCrows.Presentation
                 chapterVisuals?.ApplyCanonicalSession(after);
 
             if (delta.Has(PresentationCue.Victory))
+            {
                 Play(victoryFx);
 
+                if (playerAnimator != null)
+                    Trigger(playerAnimator, "Victory");
+                else
+                    playerProceduralMotion?.PlayVictory();
+            }
+
             if (delta.Has(PresentationCue.Defeat))
+            {
                 Play(defeatFx);
+
+                if (playerAnimator != null)
+                    Trigger(playerAnimator, "Defeated");
+                else
+                    playerProceduralMotion?.PlayDefeated();
+            }
         }
 
         private void PresentResolvedPlayerAction(
@@ -151,16 +177,28 @@ namespace DungeonsCrows.Presentation
             switch (resolvedActionType)
             {
                 case "attack":
-                    Trigger(playerAnimator, "AttackResolved");
+                    if (playerAnimator != null)
+                        Trigger(playerAnimator, "AttackResolved");
+                    else
+                        playerProceduralMotion?.PlayAttack();
                     break;
                 case "defend":
-                    Trigger(playerAnimator, "Guard");
+                    if (playerAnimator != null)
+                        Trigger(playerAnimator, "Guard");
+                    else
+                        playerProceduralMotion?.PlayGuard();
                     break;
                 case "interact":
-                    Trigger(playerAnimator, "Rite");
+                    if (playerAnimator != null)
+                        Trigger(playerAnimator, "Rite");
+                    else
+                        playerProceduralMotion?.PlayRite();
                     break;
                 case "speak":
-                    Trigger(playerAnimator, "Speak");
+                    if (playerAnimator != null)
+                        Trigger(playerAnimator, "Speak");
+                    else
+                        playerProceduralMotion?.PlaySpeak();
                     break;
             }
         }
