@@ -1,0 +1,18 @@
+{
+  "name": "DungeonsCrows.Editor",
+  "rootNamespace": "DungeonsCrows",
+  "references": [
+    "DungeonsCrows.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
