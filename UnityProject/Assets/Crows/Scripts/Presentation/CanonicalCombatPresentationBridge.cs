@@ -21,6 +21,28 @@ namespace DungeonsCrows.Presentation
         [SerializeField] private ParticleSystem victoryFx;
         [SerializeField] private ParticleSystem defeatFx;
 
+        public void Configure(
+            OnlineCampaignController campaignController,
+            ChapterVisualStateBridge chapterBridge,
+            ParticleSystem attackHit,
+            ParticleSystem playerDamage,
+            ParticleSystem guard,
+            ParticleSystem heal,
+            ParticleSystem ritual,
+            ParticleSystem victory,
+            ParticleSystem defeat)
+        {
+            campaign = campaignController;
+            chapterVisuals = chapterBridge;
+            attackHitFx = attackHit;
+            playerDamageFx = playerDamage;
+            guardFx = guard;
+            healFx = heal;
+            ritualFx = ritual;
+            victoryFx = victory;
+            defeatFx = defeat;
+        }
+
         private void OnEnable()
         {
             if (campaign == null) return;
