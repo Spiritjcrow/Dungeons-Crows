@@ -20,6 +20,8 @@ namespace DungeonsCrows.UI
         private ProgressBar _enemyHealth;
         private Label _playerHealthText;
         private VisualElement _playerHealthFill;
+        private Label _playerEssenceText;
+        private VisualElement _playerEssenceFill;
         private Label _objectiveLabel;
         private Label _scoreLabel;
         private Label _relicLabel;
@@ -31,6 +33,7 @@ namespace DungeonsCrows.UI
         private Button _defendButton;
         private Button _interactButton;
         private Button _speakButton;
+        private Button _invokeButton;
 
         private void Awake()
         {
@@ -91,6 +94,11 @@ namespace DungeonsCrows.UI
                      IsEnabled(_speakButton))
             {
                 campaign.Speak(_speechField?.value ?? string.Empty);
+            }
+            else if (Keyboard.current.digit5Key.wasPressedThisFrame &&
+                     IsEnabled(_invokeButton))
+            {
+                campaign.Invoke();
             }
         }
 
@@ -281,9 +289,44 @@ namespace DungeonsCrows.UI
 
         private void BuildPlayerOrb()
         {
+            VisualElement resolveOrb = CreateResourceOrb(
+                left: 28,
+                right: null,
+                background: new Color(0.08f, 0.02f, 0.025f, 0.92f),
+                fill: new Color(0.52f, 0.035f, 0.045f, 0.95f),
+                out _playerHealthFill,
+                out _playerHealthText);
+
+            _root.Add(resolveOrb);
+
+            VisualElement essenceOrb = CreateResourceOrb(
+                left: null,
+                right: 28,
+                background: new Color(0.015f, 0.03f, 0.075f, 0.94f),
+                fill: new Color(0.025f, 0.28f, 0.72f, 0.96f),
+                out _playerEssenceFill,
+                out _playerEssenceText);
+
+            _root.Add(essenceOrb);
+        }
+
+        private static VisualElement CreateResourceOrb(
+            float? left,
+            float? right,
+            Color background,
+            Color fill,
+            out VisualElement fillElement,
+            out Label textLabel)
+        {
             VisualElement orb = new VisualElement();
             orb.style.position = Position.Absolute;
-            orb.style.left = 28;
+
+            if (left.HasValue)
+                orb.style.left = left.Value;
+
+            if (right.HasValue)
+                orb.style.right = right.Value;
+
             orb.style.bottom = 26;
             orb.style.width = 124;
             orb.style.height = 124;
@@ -291,7 +334,7 @@ namespace DungeonsCrows.UI
             orb.style.borderTopRightRadius = 62;
             orb.style.borderBottomLeftRadius = 62;
             orb.style.borderBottomRightRadius = 62;
-            orb.style.backgroundColor = new Color(0.08f, 0.02f, 0.025f, 0.92f);
+            orb.style.backgroundColor = background;
             orb.style.borderLeftWidth = 3;
             orb.style.borderRightWidth = 3;
             orb.style.borderTopWidth = 3;
@@ -301,26 +344,26 @@ namespace DungeonsCrows.UI
             orb.style.borderTopColor = new Color(0.38f, 0.28f, 0.2f);
             orb.style.borderBottomColor = new Color(0.38f, 0.28f, 0.2f);
             orb.style.overflow = Overflow.Hidden;
-            _root.Add(orb);
 
-            _playerHealthFill = new VisualElement();
-            _playerHealthFill.style.position = Position.Absolute;
-            _playerHealthFill.style.left = 0;
-            _playerHealthFill.style.right = 0;
-            _playerHealthFill.style.bottom = 0;
-            _playerHealthFill.style.height = 100;
-            _playerHealthFill.style.backgroundColor =
-                new Color(0.52f, 0.035f, 0.045f, 0.95f);
-            orb.Add(_playerHealthFill);
+            fillElement = new VisualElement();
+            fillElement.style.position = Position.Absolute;
+            fillElement.style.left = 0;
+            fillElement.style.right = 0;
+            fillElement.style.bottom = 0;
+            fillElement.style.height = 100;
+            fillElement.style.backgroundColor = fill;
+            orb.Add(fillElement);
 
-            _playerHealthText = new Label();
-            _playerHealthText.style.position = Position.Absolute;
-            _playerHealthText.style.left = 0;
-            _playerHealthText.style.right = 0;
-            _playerHealthText.style.top = 48;
-            _playerHealthText.style.unityTextAlign = TextAnchor.MiddleCenter;
-            _playerHealthText.style.unityFontStyleAndWeight = FontStyle.Bold;
-            orb.Add(_playerHealthText);
+            textLabel = new Label();
+            textLabel.style.position = Position.Absolute;
+            textLabel.style.left = 0;
+            textLabel.style.right = 0;
+            textLabel.style.top = 48;
+            textLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+            textLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+            orb.Add(textLabel);
+
+            return orb;
         }
 
         private void BuildObjectiveTracker()
@@ -405,8 +448,8 @@ namespace DungeonsCrows.UI
             dock.style.position = Position.Absolute;
             dock.style.left = new Length(50, LengthUnit.Percent);
             dock.style.bottom = 20;
-            dock.style.width = 560;
-            dock.style.marginLeft = -280;
+            dock.style.width = 620;
+            dock.style.marginLeft = -310;
             dock.style.alignItems = Align.Center;
             _root.Add(dock);
 
@@ -426,6 +469,10 @@ namespace DungeonsCrows.UI
             _speakButton = MakeAction("4", "SPEAK", () =>
                 campaign?.Speak(_speechField?.value ?? string.Empty));
             actions.Add(_speakButton);
+
+            _invokeButton = MakeAction("5", "INVOKE", () =>
+                campaign?.Invoke());
+            actions.Add(_invokeButton);
 
             _speechField = new TextField();
             _speechField.maxLength = OnlineProtocol.MaxFreeformTextLength;
@@ -474,7 +521,7 @@ namespace DungeonsCrows.UI
         {
             if (_statusLabel != null)
                 _statusLabel.text = ready
-                    ? "dc-turn/2.0 ready"
+                    ? OnlineProtocol.Version + " ready"
                     : "Protocol unavailable";
             Refresh();
         }
@@ -512,7 +559,7 @@ namespace DungeonsCrows.UI
                 if (_statusLabel != null && campaign.ProtocolReady)
                     _statusLabel.text = campaign.Busy
                         ? "Contacting the shard…"
-                        : "dc-turn/2.0 ready";
+                        : OnlineProtocol.Version + " ready";
                 return;
             }
 
@@ -550,6 +597,24 @@ namespace DungeonsCrows.UI
                     LengthUnit.Percent);
             }
 
+            if (_playerEssenceText != null && player != null)
+                _playerEssenceText.text =
+                    player.essence + "\nESSENCE";
+
+            if (_playerEssenceFill != null && player != null)
+            {
+                float fraction = player.maxEssence > 0
+                    ? Mathf.Clamp01(
+                        (float)player.essence /
+                        player.maxEssence)
+                    : 0f;
+
+                _playerEssenceFill.style.height =
+                    new Length(
+                        fraction * 100f,
+                        LengthUnit.Percent);
+            }
+
             if (_minimapImage != null &&
                 minimap != null)
             {
@@ -579,10 +644,25 @@ namespace DungeonsCrows.UI
                         : session.lastNarration;
 
             bool canAct = ownTurn && !campaign.Busy;
-            _attackButton?.SetEnabled(canAct && session.enemy != null && session.enemy.hp > 0);
+            _attackButton?.SetEnabled(
+                canAct &&
+                session.enemy != null &&
+                session.enemy.hp > 0);
+
             _defendButton?.SetEnabled(canAct);
-            _interactButton?.SetEnabled(canAct && !ObjectiveComplete(session));
+
+            _interactButton?.SetEnabled(
+                canAct &&
+                !ObjectiveComplete(session));
+
             _speakButton?.SetEnabled(canAct);
+
+            _invokeButton?.SetEnabled(
+                canAct &&
+                player != null &&
+                player.essence >= 2 &&
+                session.enemy != null &&
+                session.enemy.hp > 0);
 
             if (_statusLabel != null)
             {
