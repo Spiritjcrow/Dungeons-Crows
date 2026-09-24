@@ -11,6 +11,7 @@ namespace DungeonsCrows.Presentation
         [SerializeField] private ChapterEnemyPresenter enemyPresenter;
         [SerializeField] private CombatCameraFeedback cameraFeedback;
         [SerializeField] private CrowFlockController crowFlock;
+        [SerializeField] private CanonicalAudioDirector audioDirector;
         [SerializeField] private Animator playerAnimator;
         [SerializeField] private ProceduralActorMotion playerProceduralMotion;
         [SerializeField] private Animator enemyAnimatorFallback;
@@ -30,6 +31,7 @@ namespace DungeonsCrows.Presentation
             ChapterEnemyPresenter chapterEnemyPresenter,
             CombatCameraFeedback combatCameraFeedback,
             CrowFlockController flockController,
+            CanonicalAudioDirector canonicalAudio,
             ParticleSystem attackHit,
             ParticleSystem playerDamage,
             ParticleSystem guard,
@@ -43,6 +45,7 @@ namespace DungeonsCrows.Presentation
             enemyPresenter = chapterEnemyPresenter;
             cameraFeedback = combatCameraFeedback;
             crowFlock = flockController;
+            audioDirector = canonicalAudio;
             attackHitFx = attackHit;
             playerDamageFx = playerDamage;
             guardFx = guard;
@@ -111,6 +114,9 @@ namespace DungeonsCrows.Presentation
             enemyPresenter?.PresentDelta(delta, after);
             cameraFeedback?.Present(delta);
             crowFlock?.Present(delta);
+            audioDirector?.Present(
+                delta,
+                envelope.resolvedActionType);
 
             PresentResolvedPlayerAction(
                 envelope.resolvedActionType);
