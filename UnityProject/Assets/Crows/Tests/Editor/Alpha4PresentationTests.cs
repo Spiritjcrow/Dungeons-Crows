@@ -1,5 +1,6 @@
 using DungeonsCrows.CameraSystem;
 using DungeonsCrows.Online;
+using DungeonsCrows.Rendering;
 using DungeonsCrows.World;
 using NUnit.Framework;
 using UnityEngine;
@@ -101,6 +102,69 @@ namespace DungeonsCrows.Tests.Editor
 
             Object.DestroyImmediate(target);
             Object.DestroyImmediate(root);
+        }
+
+
+        [Test]
+        public void QualityProfiles_ScaleDownWithoutChangingGameRules()
+        {
+            Alpha4QualityProfile cinematic =
+                Alpha4QualityDirector.ProfileFor(
+                    VisualQualityTier.Cinematic);
+
+            Alpha4QualityProfile balanced =
+                Alpha4QualityDirector.ProfileFor(
+                    VisualQualityTier.Balanced);
+
+            Alpha4QualityProfile mobile =
+                Alpha4QualityDirector.ProfileFor(
+                    VisualQualityTier.Mobile);
+
+            Assert.Greater(
+                cinematic.ShadowDistance,
+                balanced.ShadowDistance);
+            Assert.Greater(
+                balanced.ShadowDistance,
+                mobile.ShadowDistance);
+            Assert.GreaterOrEqual(
+                cinematic.AntiAliasing,
+                balanced.AntiAliasing);
+            Assert.GreaterOrEqual(
+                balanced.AntiAliasing,
+                mobile.AntiAliasing);
+            Assert.IsTrue(cinematic.Hdr);
+            Assert.IsFalse(mobile.Hdr);
+        }
+
+        [Test]
+        public void LocalHuntIdentityStore_RoundTripsAndClears()
+        {
+            LocalHuntIdentityStore.Clear();
+
+            try
+            {
+                LocalHuntIdentityStore.Save(
+                    "CROW42",
+                    "CROW42-p1",
+                    "Rook");
+
+                Assert.IsTrue(
+                    LocalHuntIdentityStore.TryLoad(
+                        out LocalHuntIdentity identity));
+
+                Assert.AreEqual("CROW42", identity.code);
+                Assert.AreEqual("CROW42-p1", identity.playerId);
+                Assert.AreEqual("Rook", identity.playerName);
+
+                LocalHuntIdentityStore.Clear();
+
+                Assert.IsFalse(
+                    LocalHuntIdentityStore.TryLoad(out _));
+            }
+            finally
+            {
+                LocalHuntIdentityStore.Clear();
+            }
         }
 
         [Test]
