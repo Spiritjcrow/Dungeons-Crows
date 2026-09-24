@@ -196,6 +196,29 @@ namespace DungeonsCrows.Tests.Editor
         }
 
         [Test]
+        public void CanonicalAudioDirector_GeneratesFallbackClips()
+        {
+            GameObject root =
+                new GameObject("Audio Director Test");
+
+            try
+            {
+                CanonicalAudioDirector audio =
+                    root.AddComponent<CanonicalAudioDirector>();
+
+                audio.EnsureReady();
+
+                Assert.IsTrue(audio.Ready);
+                Assert.IsNotNull(
+                    root.GetComponent<AudioSource>());
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void RuntimeMinimapCamera_CreatesRealRenderTexture()
         {
             GameObject player =
