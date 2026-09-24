@@ -73,14 +73,7 @@ namespace DungeonsCrows.Presentation
 
             if (_active?.root != null)
             {
-                bool shouldShow =
-                    session.enemy != null &&
-                    (session.enemy.hp > 0 ||
-                     string.Equals(
-                         session.campaignStatus,
-                         "active",
-                         StringComparison.Ordinal));
-
+                bool shouldShow = session.enemy != null;
                 _active.root.SetActive(shouldShow);
             }
         }
