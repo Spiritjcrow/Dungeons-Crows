@@ -1,0 +1,21 @@
+{
+  "name": "DungeonsCrows.Tests.Editor",
+  "rootNamespace": "DungeonsCrows.Tests.Editor",
+  "references": [
+    "DungeonsCrows.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
