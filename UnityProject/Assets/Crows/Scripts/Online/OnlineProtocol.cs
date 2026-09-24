@@ -4,7 +4,7 @@ namespace DungeonsCrows.Online
 {
     public static class OnlineProtocol
     {
-        public const string Version = "dc-turn/2.0";
+        public const string Version = "dc-turn/3.0";
         public const string SessionEntityType = "game-session";
         public const int MaxPlayerNameLength = 24;
         public const int MaxFreeformTextLength = 240;
@@ -16,6 +16,7 @@ namespace DungeonsCrows.Online
             "attack",
             "defend",
             "interact",
+            "invoke",
             "speak"
         };
     }
@@ -24,7 +25,10 @@ namespace DungeonsCrows.Online
     {
         public static bool IsCompatible(string serverVersion)
         {
-            return string.Equals(serverVersion, OnlineProtocol.Version, StringComparison.Ordinal);
+            return string.Equals(
+                serverVersion,
+                OnlineProtocol.Version,
+                StringComparison.Ordinal);
         }
     }
 
@@ -46,6 +50,7 @@ namespace DungeonsCrows.Online
         public ProtocolLimits limits;
         public int[] chapters;
         public string[] campaignStatuses;
+        public string[] combatantFields;
         public string[] sessionFields;
         public string[] turnResponseFields;
     }
@@ -57,6 +62,8 @@ namespace DungeonsCrows.Online
         public string name;
         public int hp;
         public int maxHp;
+        public int essence;
+        public int maxEssence;
         public int defense;
         public bool isEnemy;
         public int defendingUntilTurn;
