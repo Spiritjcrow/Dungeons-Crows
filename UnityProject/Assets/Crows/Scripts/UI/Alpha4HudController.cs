@@ -1,6 +1,7 @@
 using System;
 using DungeonsCrows.Online;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace DungeonsCrows.UI
@@ -55,6 +56,39 @@ namespace DungeonsCrows.UI
             campaign.BusyChanged -= OnBusyChanged;
             campaign.SessionChanged -= OnSessionChanged;
             campaign.ErrorRaised -= OnError;
+        }
+
+        private void Update()
+        {
+            if (campaign == null ||
+                campaign.Session == null ||
+                campaign.Busy ||
+                Keyboard.current == null ||
+                IsTypingSpeech())
+            {
+                return;
+            }
+
+            if (Keyboard.current.digit1Key.wasPressedThisFrame &&
+                IsEnabled(_attackButton))
+            {
+                campaign.Attack();
+            }
+            else if (Keyboard.current.digit2Key.wasPressedThisFrame &&
+                     IsEnabled(_defendButton))
+            {
+                campaign.Defend();
+            }
+            else if (Keyboard.current.digit3Key.wasPressedThisFrame &&
+                     IsEnabled(_interactButton))
+            {
+                campaign.Interact();
+            }
+            else if (Keyboard.current.digit4Key.wasPressedThisFrame &&
+                     IsEnabled(_speakButton))
+            {
+                campaign.Speak(_speechField?.value ?? string.Empty);
+            }
         }
 
         public void SetCampaign(OnlineCampaignController controller)
@@ -491,6 +525,26 @@ namespace DungeonsCrows.UI
                     ? "Resolving canonical turn…"
                     : (ownTurn ? "The crow turns toward you." : "Waiting for the current oath.");
             }
+        }
+
+        private bool IsTypingSpeech()
+        {
+            if (_speechField == null ||
+                _speechField.panel == null ||
+                _speechField.panel.focusController == null)
+            {
+                return false;
+            }
+
+            Focusable focused =
+                _speechField.panel.focusController.focusedElement;
+
+            return ReferenceEquals(focused, _speechField);
+        }
+
+        private static bool IsEnabled(Button button)
+        {
+            return button != null && button.enabledSelf;
         }
 
         private static CombatantDto FindPlayer(GameSessionDto session, string playerId)
