@@ -91,3 +91,20 @@ GitHub Actions has previously failed before workflow steps received a runner (`r
 - Cross-platform quality profiles for PC, Chromebook, and Android-class hardware.
 
 See `docs/GAME_VISION.md` for the broader design contract.
+
+
+## Alpha 4 production client
+
+The production presentation is a full 3D Unity 6 dark-fantasy action RPG, not the flat browser systems harness.
+
+Current Unity branch now includes:
+- first-person / third-person camera switching;
+- collision-aware over-the-shoulder camera;
+- WASD/gamepad free exploration, sprint and jump;
+- canonical-state-driven morphic environment controller;
+- chapter visual bridge;
+- Alpha 4 visual canon and scalable rendering direction.
+
+The browser build remains useful for authoritative rules/network testing, but it is not the final visual client.
+
+See `docs/VISUAL_CANON_ALPHA4.md`.
