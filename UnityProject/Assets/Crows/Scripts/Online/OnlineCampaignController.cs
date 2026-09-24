@@ -9,9 +9,13 @@ namespace DungeonsCrows.Online
         [SerializeField] private OnlineGameClient client;
         [SerializeField] private bool verifyProtocolOnStart = true;
         [SerializeField] private bool resumeSavedHunt = true;
+        [SerializeField] private bool refreshWhileWaitingForParty = true;
+        [SerializeField, Min(0.5f)] private float waitingRefreshSeconds = 1.5f;
 
         private bool _busy;
+        private bool _refreshing;
         private bool _protocolReady;
+        private float _nextRefreshAt;
         private string _playerId = string.Empty;
         private string _playerName = string.Empty;
         private GameSessionDto _session;
@@ -38,6 +42,33 @@ namespace DungeonsCrows.Online
         {
             if (verifyProtocolOnStart)
                 VerifyProtocol();
+        }
+
+        private void Update()
+        {
+            if (!refreshWhileWaitingForParty ||
+                _busy ||
+                _refreshing ||
+                !_protocolReady ||
+                _session == null ||
+                !string.Equals(
+                    _session.campaignStatus,
+                    "active",
+                    StringComparison.Ordinal) ||
+                string.Equals(
+                    _session.activeActorId,
+                    _playerId,
+                    StringComparison.Ordinal) ||
+                Time.unscaledTime < _nextRefreshAt)
+            {
+                return;
+            }
+
+            _nextRefreshAt =
+                Time.unscaledTime + waitingRefreshSeconds;
+
+            StartCoroutine(
+                SilentPartyRefreshRoutine(_session.code));
         }
 
         public void SetClient(OnlineGameClient onlineClient)
@@ -88,6 +119,8 @@ namespace DungeonsCrows.Online
             _playerId = string.Empty;
             _playerName = string.Empty;
             _session = null;
+            _refreshing = false;
+            _nextRefreshAt = 0f;
             SessionChanged?.Invoke(null);
         }
 
@@ -236,6 +269,34 @@ namespace DungeonsCrows.Online
             SetBusy(false);
         }
 
+        private IEnumerator SilentPartyRefreshRoutine(string code)
+        {
+            _refreshing = true;
+
+            yield return client.LoadSession(
+                code,
+                envelope =>
+                {
+                    GameSessionDto incoming = envelope.session;
+
+                    if (incoming == null)
+                        return;
+
+                    if (_session == null ||
+                        incoming.turnNumber >= _session.turnNumber)
+                    {
+                        SetSession(incoming);
+                    }
+                },
+                _ =>
+                {
+                    // Transient party-sync failures remain silent.
+                    // The next scheduled refresh retries automatically.
+                });
+
+            _refreshing = false;
+        }
+
         private void TryResumeSavedHunt()
         {
             if (_busy || client == null || _session != null)
@@ -380,6 +441,8 @@ namespace DungeonsCrows.Online
         private void SetSession(GameSessionDto session)
         {
             _session = session;
+            _nextRefreshAt =
+                Time.unscaledTime + waitingRefreshSeconds;
             SessionChanged?.Invoke(_session);
         }
 
