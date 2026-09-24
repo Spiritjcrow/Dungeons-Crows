@@ -10,6 +10,7 @@ namespace DungeonsCrows.UI
     public sealed class Alpha4HudController : MonoBehaviour
     {
         [SerializeField] private OnlineCampaignController campaign;
+        [SerializeField] private RuntimeMinimapCamera minimap;
 
         private UIDocument _document;
         private VisualElement _root;
@@ -24,6 +25,7 @@ namespace DungeonsCrows.UI
         private Label _relicLabel;
         private Label _turnLabel;
         private Label _narrationLabel;
+        private Image _minimapImage;
         private TextField _speechField;
         private Button _attackButton;
         private Button _defendButton;
@@ -90,6 +92,15 @@ namespace DungeonsCrows.UI
             {
                 campaign.Speak(_speechField?.value ?? string.Empty);
             }
+        }
+
+        public void SetMinimap(RuntimeMinimapCamera controller)
+        {
+            minimap = controller;
+
+            if (_minimapImage != null)
+                _minimapImage.image =
+                    minimap != null ? minimap.Texture : null;
         }
 
         public void SetCampaign(OnlineCampaignController controller)
@@ -326,6 +337,15 @@ namespace DungeonsCrows.UI
             tracker.style.backgroundColor = new Color(0.02f, 0.025f, 0.03f, 0.78f);
             _root.Add(tracker);
 
+            _minimapImage = new Image();
+            _minimapImage.scaleMode = ScaleMode.ScaleToFit;
+            _minimapImage.style.width = 248;
+            _minimapImage.style.height = 164;
+            _minimapImage.style.marginBottom = 10;
+            _minimapImage.image =
+                minimap != null ? minimap.Texture : null;
+            tracker.Add(_minimapImage);
+
             Label heading = new Label("ACTIVE OATH");
             heading.style.fontSize = 10;
             heading.style.letterSpacing = 2;
@@ -528,6 +548,12 @@ namespace DungeonsCrows.UI
                 _playerHealthFill.style.height = new Length(
                     fraction * 100f,
                     LengthUnit.Percent);
+            }
+
+            if (_minimapImage != null &&
+                minimap != null)
+            {
+                _minimapImage.image = minimap.Texture;
             }
 
             if (_objectiveLabel != null)
