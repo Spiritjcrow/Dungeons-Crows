@@ -25,6 +25,7 @@ namespace DungeonsCrows.EditorTools
         [MenuItem("Dungeons & Crows/Build Gothic Prototype Scene")]
         public static void Build()
         {
+            Alpha4RenderPipelineSetup.EnsureConfigured();
             EnsureFolders();
             Scene scene = EditorSceneManager.NewScene(
                 NewSceneSetup.EmptyScene,
