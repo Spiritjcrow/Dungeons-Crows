@@ -114,6 +114,7 @@ export const handler = router({
           session: resolution.state,
           narration,
           diceRolls: resolution.diceRolls,
+          resolvedActionType: action,
         }));
       } catch (err) {
         return error(
