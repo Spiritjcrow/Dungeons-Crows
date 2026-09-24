@@ -23,6 +23,7 @@ namespace DungeonsCrows.UI
         private Label _scoreLabel;
         private Label _relicLabel;
         private Label _turnLabel;
+        private Label _narrationLabel;
         private TextField _speechField;
         private Button _attackButton;
         private Button _defendButton;
@@ -210,6 +211,7 @@ namespace DungeonsCrows.UI
             BuildTopBar();
             BuildPlayerOrb();
             BuildObjectiveTracker();
+            BuildNarrationPanel();
             BuildHotbar();
         }
 
@@ -343,6 +345,38 @@ namespace DungeonsCrows.UI
             _relicLabel.style.marginTop = 4;
             _relicLabel.style.whiteSpace = WhiteSpace.Normal;
             tracker.Add(_relicLabel);
+        }
+
+
+        private void BuildNarrationPanel()
+        {
+            VisualElement panel = new VisualElement();
+            panel.style.position = Position.Absolute;
+            panel.style.left = new Length(50, LengthUnit.Percent);
+            panel.style.top = 122;
+            panel.style.width = 620;
+            panel.style.marginLeft = -310;
+            panel.style.paddingTop = 10;
+            panel.style.paddingBottom = 10;
+            panel.style.paddingLeft = 14;
+            panel.style.paddingRight = 14;
+            panel.style.backgroundColor =
+                new Color(0.015f, 0.02f, 0.025f, 0.72f);
+            _root.Add(panel);
+
+            Label heading = new Label("DUNGEON MASTER");
+            heading.style.fontSize = 9;
+            heading.style.letterSpacing = 2;
+            heading.style.color =
+                new Color(0.72f, 0.57f, 0.38f);
+            panel.Add(heading);
+
+            _narrationLabel = new Label();
+            _narrationLabel.style.marginTop = 5;
+            _narrationLabel.style.whiteSpace = WhiteSpace.Normal;
+            _narrationLabel.style.unityTextAlign =
+                TextAnchor.UpperCenter;
+            panel.Add(_narrationLabel);
         }
 
         private void BuildHotbar()
@@ -511,6 +545,12 @@ namespace DungeonsCrows.UI
                 _turnLabel.text = active
                     ? (ownTurn ? "YOUR TURN" : "ALLY TURN")
                     : session.campaignStatus.ToUpperInvariant();
+
+            if (_narrationLabel != null)
+                _narrationLabel.text =
+                    string.IsNullOrWhiteSpace(session.lastNarration)
+                        ? "The crows watch in silence."
+                        : session.lastNarration;
 
             bool canAct = ownTurn && !campaign.Busy;
             _attackButton?.SetEnabled(canAct && session.enemy != null && session.enemy.hp > 0);
