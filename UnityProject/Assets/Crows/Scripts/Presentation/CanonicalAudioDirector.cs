@@ -11,6 +11,7 @@ namespace DungeonsCrows.Presentation
         [SerializeField] private AudioClip hitClip;
         [SerializeField] private AudioClip guardClip;
         [SerializeField] private AudioClip ritualClip;
+        [SerializeField] private AudioClip invokeClip;
         [SerializeField] private AudioClip victoryClip;
         [SerializeField] private AudioClip defeatClip;
         [SerializeField] private AudioClip speakClip;
@@ -28,6 +29,7 @@ namespace DungeonsCrows.Presentation
             hitClip != null &&
             guardClip != null &&
             ritualClip != null &&
+            invokeClip != null &&
             victoryClip != null &&
             defeatClip != null;
 
@@ -64,6 +66,9 @@ namespace DungeonsCrows.Presentation
                     break;
                 case "interact":
                     Play(ritualClip, 0.48f);
+                    break;
+                case "invoke":
+                    Play(invokeClip, 0.78f);
                     break;
                 case "speak":
                     Play(speakClip, 0.36f);
@@ -141,6 +146,15 @@ namespace DungeonsCrows.Presentation
                 0.5f,
                 0.14f,
                 0.05f);
+
+            AssignFallback(
+                ref invokeClip,
+                "DC_InvokeFallback",
+                420f,
+                155f,
+                0.34f,
+                0.2f,
+                0.08f);
 
             AssignFallback(
                 ref victoryClip,
