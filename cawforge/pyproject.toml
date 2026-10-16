@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cawforge-genesis"
+version = "0.1.0"
+description = "Local-first simulated proof-of-useful-work receipts for Dungeons & Crows"
+requires-python = ">=3.10"
+dependencies = ["cryptography>=41,<50"]
+
+[project.scripts]
+cawforge = "cawforge.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,25 @@
+name: CAW Forge Genesis Python tests
+on:
+  pull_request:
+    paths:
+      - 'cawforge/**'
+  push:
+    paths:
+      - 'cawforge/**'
+jobs:
+  security-and-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: cawforge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e . pytest
+      - run: python -m pytest -q
+      - run: PYTHONPATH=src sh scripts/run_genesis.sh
+      - run: PYTHONPATH=src python -m cawforge --home .cawforge audit
