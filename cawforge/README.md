@@ -2,6 +2,10 @@
 
 **Create. Verify. Earn.** Experimental, **NON-MONETARY** contribution accounting for Dungeons & Crows × SelmaOS × Sol UltraViolet.
 
+## Phase 2: freemium commerce sandbox
+
+See [`docs/PHASE2_COMMERCE.md`](docs/PHASE2_COMMERCE.md) for the separate Stripe sandbox fulfillment validation and safe player-assignment prototype. It is **not** connected to a live payment or withdrawal account; automatic entitlements, webhooks, app-store billing, tax compliance and payout approval remain pending. Run `PYTHONPATH=src python -m unittest discover -s tests -v` to execute both the CAW Forge and Commerce suites.
+
 ## Operational proof
 
 The included `dc.dungeon.map.v1` job creates an actual deterministic dungeon asset: walls, traversable floors, rooms, a starting location, an exit and walkable corridors. A separately invoked verification phase checks the worker's Ed25519-signed receipt, independently recomputes the map, checks reachability, and signs a tamper-evident ledger entry before awarding *simulated*, non-transferable CAWF credits. **This is not mining and not blockchain consensus.**
@@ -11,7 +15,7 @@ The included `dc.dungeon.map.v1` job creates an actual deterministic dungeon ass
 Requires Python 3.10+ and the `cryptography` Python package (`python -m pip install 'cryptography>=41,<50'` if available). Does not require cloud accounts, root, Android developer mode, or network once dependencies are installed. On Android, use a Python environment with the package available; packaging is not yet validated on every Termux build.
 
 ```sh
-sh ./scripts/run_genesis.sh
+./scripts/run_genesis.sh
 ```
 
 Or run manually:
