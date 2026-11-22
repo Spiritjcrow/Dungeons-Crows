@@ -1,0 +1,16 @@
+{
+  "schema": "dnc-dreamachine-verification/1",
+  "project": "Dungeons & Crows",
+  "component": "Selma° Agartha Dreamachine Prototype",
+  "status": "source-executed; gpu-not-verified",
+  "node_core_tests": "PASS",
+  "browser_desktop_ui": "PASS (Canvas2D fallback)",
+  "browser_mobile_ui": "PASS (Canvas2D fallback)",
+  "browser_module_errors": 0,
+  "webgl2_gpu_shader": "NOT_VERIFIED: unavailable in test browser",
+  "live_llm": "NOT_IMPLEMENTED",
+  "game_engine_integration": "STANDALONE; NOT integrated into Alpha 8 runtime yet",
+  "scientific_gravity_validation": "NOT_VERIFIED; controlled design assumption",
+  "scope": "game-only deterministic inference and bounded local-memory; no physical-world sensor access",
+  "original_assets": "preserved without changes"
+}
